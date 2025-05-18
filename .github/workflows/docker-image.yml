@@ -1,10 +1,11 @@
-name: Docker Image CI
+name: Docker Image CI - develop
 
 on:
   push:
     branches: [ "develop" ]
   pull_request:
     branches: [ "develop" ]
+  workflow_dispatch:
 
 jobs:
 
