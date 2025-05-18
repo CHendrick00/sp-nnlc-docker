@@ -18,21 +18,20 @@ This will run an automated rlog collection script which will save any new rlogs 
 - AMD and Nvidia GPUs are supported for model generation. See environment variable 'GPU'.
 
 ### Filetree Explanation
-/
-|- /input (mounted volume)
-|--- /$VEHICLE
-|----- /$DEVICE_ID (contains rlogs downloaded using rlog_collect.sh)
-|- /output (mounted volume)
-|--- /$VEHICLE (nnlc processing output here)
-|- /home
-|--- /nnlc
-|----- rlog_collect.sh (collects rlogs from comma over SSH)
-|----- /Downloads
-|------- /rlogs (automnatically created rlog processing directory)
-|----- /nnlc (automatically created directory containing processing tools)
-|------- process.sh
+/</br>
+|- /input (mounted volume)</br>
+|--- /$VEHICLE</br>
+|----- /$DEVICE_ID (contains rlogs downloaded using rlog_collect.sh)</br>
+|- /output (mounted volume)</br>
+|--- /$VEHICLE (nnlc processing output here)</br>
+|- /home</br>
+|--- /nnlc</br>
+|----- rlog_collect.sh (collects rlogs from comma over SSH)</br>
+|----- /Downloads</br>
+|------- /rlogs (automnatically created rlog processing directory)</br>
+|----- /nnlc (automatically created directory containing processing tools)</br>
+|------- process.sh</br>
 |------- ...
-
 
 
 ### todo
