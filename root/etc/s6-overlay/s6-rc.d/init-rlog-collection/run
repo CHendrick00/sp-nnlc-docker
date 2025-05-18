@@ -1,0 +1,34 @@
+#!/usr/bin/with-contenv bash
+
+if [ $COLLECT_RLOGS ]; then
+
+  # Generate SSH Keys
+  if [ -f "/input/comma.pub" ] && [ -f "/input/comma" ]; then
+    ssh-keygen -t ed25519 -f /home/nnlc/.ssh/id_ed25519 -N ""
+
+    # keys need to be stored to a persistent volume so they aren't regenerated whenever the container is recreated
+    cp /home/nnlc/.ssh/id_ed25519 /input/comma
+    cp /home/nnlc/.ssh/id_ed25519.pub /input/comma.pub
+  else
+    # use existing keys if available
+    cp /input/comma /home/nnlc/.ssh/id_ed25519
+    cp /input/comma.pub /home/nnlc/.ssh/id_ed25519.pub
+  fi
+
+  # Add SSH config file entry for comma
+  touch /home/nnlc/.ssh/config
+  echo "Host comma" > /home/nnlc/.ssh/config
+  echo "User comma" > /home/nnlc/.ssh/config
+  echo "Hostname $COMMA_IP" > /home/nnlc/.ssh/config
+
+  if [ $AUTOMATE_RLOGS ]; then
+    # Set up rlog collection cronjob
+    if [[ -f "/etc/crontabs/nnlc" ]]; then
+      touch /etc/crontabs/nnlc
+      chown "nnlc":"nnlc" "/etc/crontabs/nnlc"
+      crontab -u "nnlc" "/etc/crontabs/nnlc"
+    fi
+    (crontab -u nnlc -l ; echo "00 0-23/6 * * * /home/nnlc/rlog_collect.sh") | crontab -
+  fi
+
+fi
