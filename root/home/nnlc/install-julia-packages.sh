@@ -42,12 +42,7 @@ echo
 # AMD		AMDGPU
 # Apple Metal	Metal
 # Intel oneAPI	oneAPI
-if [ $GPU == 'NVIDIA' ]; then
- julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN")'
- bail_on_error
-elif [ $GPU == 'AMD' ]; then
- julia -e 'import Pkg; Pkg.add("AMDGPU")'
- bail_on_error
-fi
+julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN"); Pkg.add("AMDGPU")'
+bail_on_error
 
 exit 0
