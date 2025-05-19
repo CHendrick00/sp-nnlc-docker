@@ -29,8 +29,8 @@ RUN groupadd -g 1234 nnlc && \
 
 # Set nnlc user permissions
 RUN mkdir /input /output
-RUN chown -R nnlc:nnlc /input /output
-RUN chmod u+x /home/nnlc/rlog_collect.sh /home/nnlc/nnlc/process.sh
+RUN chown -R nnlc:nnlc /input /output /home/nnlc
+RUN chmod u+x /home/nnlc/*.sh /home/nnlc/nnlc/process.sh
 
 # volumes
 VOLUME /input
@@ -38,8 +38,17 @@ VOLUME /output
 
 # Switch to the custom user
 USER nnlc
- 
-# Set the workdir
-WORKDIR /home/nnlc
+RUN /home/nnlc/install-nnlc-dependencies.sh
 
+# Add julia to PATH
+USER root
+RUN ln -sf /home/nnlc/nnlc/julia-1.11.5/bin/julia /usr/local/bin
+# RUN chown -R nnlc:nnlc /usr/local/bin/julia
+
+# Switch to the custom user
+USER nnlc
+RUN /home/nnlc/install-julia-packages.sh
+
+# Run init scripts as nnlc user
+USER nnlc
 ENTRYPOINT ["/init"]

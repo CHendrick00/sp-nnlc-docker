@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/bin/bash
 
 # project - directory and conda environment name (default)
 NNLC=nnlc
@@ -75,8 +75,8 @@ if [ ! -s sunnypilot/tools/tuning/lat.py ]; then
  git clone https://github.com/mmmorks/sunnypilot.git
  bail_on_error
  cd sunnypilot
-  git checkout staging-merged
-  bail_on_error
+ git checkout staging-merged
+ bail_on_error
  cd ..
 else
  echo "*** sunnypilot tree appears to already be present - skipping download"
@@ -84,66 +84,31 @@ fi
 echo
 
 echo
+if [ ! -s OP_ML_FF/latmodel_temporal.jl ]; then
+ echo "*** Downloading mmmorks NN training script fork"
+ echo
+ git clone https://github.com/mmmorks/OP_ML_FF
+ bail_on_error
+ cd OP_ML_FF
+ git checkout 5c3e5a39620f8822acf01bed3bf484ffc187f31a
+ bail_on_error
+ cd ..
+else
+ echo "*** OP_ML_FF tree appears to already be present - skipping download"
+fi
+echo
+
+echo
 if [ ! -d /home/nnlc/.julia ]; then
- echo "*** Downloading Julia and creating symlink /usr/local/bin/julia"
+ echo "*** Downloading Julia"
  echo
  wget https://julialang-s3.julialang.org/bin/linux/x64/1.11/julia-1.11.5-linux-x86_64.tar.gz
  bail_on_error
  tar zxf julia-1.11.5-linux-x86_64.tar.gz
  bail_on_error
- ln -sf $NNLCD/julia-1.11.5/bin/julia /usr/local/bin
- bail_on_error
 else
  echo "*** Julia appears to already be installed - assuming julia in \$PATH "
 fi
 echo
-
-echo
-echo "*** Downloading mmmorks NN training script fork"
-echo
-git clone https://github.com/mmmorks/OP_ML_FF
-bail_on_error
-cd OP_ML_FF
-git checkout 5c3e5a39620f8822acf01bed3bf484ffc187f31a
-bail_on_error
-
-echo
-echo "*** Installing Julia package requirements for training, as needed"
-echo "    NOTE: takes a while and writes about 5.6 GB to /home/nnlc/.julia"
-echo
-head -35 latmodel_temporal.jl | sed -i 's/# //' > deps.jl
-julia deps.jl
-bail_on_error
-rm -f deps.jl
-
-echo
-echo "*** Installing Julia GPU support"
-echo "    See comments in this part of the script if you have another GPU type."
-echo
-#		package name(s)
-# CUDA		CUDA and cuDNN
-# AMD		AMDGPU
-# Apple Metal	Metal
-# Intel oneAPI	oneAPI
-if [ $GPU == 'NVIDIA']; then
- julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN")'
- bail_on_error
-elif [ $GPU == 'AMD']; then
- julia -e 'import Pkg; Pkg.add("AMDGPU")'
- bail_on_error
-fi
-
-# echo
-# echo "*** Next steps:"
-# echo
-# echo "1. Edit the top of the process script with your paths to rlogs."
-# echo "2. . /home/nnlc/.bashrc"
-# echo "3. conda activate $NNLC"
-# echo "4. cd $NNLCD"
-# echo "5. ./process	 (or wherever you saved it)"
-# echo 
-# echo "After updating with more rlogs from a Comma device, just"
-# echo "re-run process as above."
-# echo
 
 exit 0
