@@ -10,8 +10,14 @@ on:
     branches: [ "master" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+    paths:
+      - root/
+      - Dockerfile
   pull_request:
     branches: [ "master" ]
+    paths:
+      - root/
+      - Dockerfile
   workflow_dispatch: 
 
 env:
