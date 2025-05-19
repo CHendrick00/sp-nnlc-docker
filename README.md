@@ -26,6 +26,8 @@ This will run an automated rlog collection script which will save any new rlogs 
 |--- /$VEHICLE (nnlc processing output here)</br>
 |- /home</br>
 |--- /nnlc</br>
+|----- install-julia-packages.sh (This script is run when creating the docker image. Installs julia dependencies listed in latmodel_temportal.jl and required GPU packages)</br>
+|----- install-nnlc-dependencies.sh (This script is run when creating the docker image. Downloads required tools and dependencies to /home/nnlc/nnlc.)</br>
 |----- rlog_collect.sh (collects rlogs from comma over SSH)</br>
 |----- /Downloads</br>
 |------- /rlogs (automnatically created rlog processing directory)</br>
@@ -36,7 +38,7 @@ This will run an automated rlog collection script which will save any new rlogs 
 
 ### todo
 - override $HOME,GENESIS
-  - own sunnpypilot fork?
+  - own source forks?
 - logging?
 - documentation and usage instructions
 - gpu support
