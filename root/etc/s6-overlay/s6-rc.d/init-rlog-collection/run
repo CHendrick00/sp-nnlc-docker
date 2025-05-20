@@ -1,17 +1,31 @@
 #!/bin/bash
 
-if [ $COLLECT_RLOGS ]; then
-  # Generate SSH Keys
-  if [ -f "/home/nnlc/.ssh/comma" ] && [ -f "/home/nnlc/.ssh/comma.pub" ]; then
-    echo "Existing SSH keys found"
-  elif [ -f "/input/comma.pub" ] && [ -f "/input/comma" ]; then
-    # use existing keys if available
-    echo "SSH keys found in /inputs."
-    cp /input/comma /home/nnlc/.ssh/comma
-    cp /input/comma.pub /home/nnlc/.ssh/comma.pub
+# Set up SSH keys if rlog collection is enabled
+if [[ -n $COLLECT_RLOGS ]]; then
+  # Check if keys are already configured correctly
+  if [[ -f "/input/comma.pub" ]] && [[ -f "/input/comma" ]]; then
+    if [[ $(cmp -s "/input/comma.pub" "/home/nnlc/.ssh/comma.pub") -eq 0 ]] && [[ $(cmp -s "/input/comma" "/home/nnlc/.ssh/comma") -eq 0 ]]; then
+      echo "SSH keys found and are synced between .ssh and input directories. Nothing to do."
+    fi
+    else
+      # Symlink keys under /input to .ssh if required (ex. custom SSH keys supplied under /input)
+      echo "Recreating symlinks from SSH keys under /input to .ssh"
+      rm /home/nnlc/.ssh/comma /home/nnlc/.ssh/comma.pub
+      ln -s /input/comma /home/nnlc/.ssh/comma
+      ln -s /input/comma.pub /home/nnlc/.ssh/comma.pub
+    fi
+  elif [[ -f "/home/nnlc/.ssh/comma" ]] && [[ -f "/home/nnlc/.ssh/comma.pub" ]]; then
+    # use existing keys if available in .ssh (ex. key(s) were deleted from /input)
+    echo "SSH keys found in .ssh but not under /input. Adding links to SSH keys under /input for persistence."
+    rm /input/comma /input/comma.pub
+    ln -s /home/nnlc/.ssh/comma /input/comma
+    ln -s /home/nnlc/.ssh/comma.pub /input/comma.pub
   else
-    # Generate keys if none already exist and none found under /input
-    echo "No usable SSH keys found. Generating new keys"
+    # Generate keys if none exist under /input or .ssh
+    echo "No usable SSH key set found. Generating new keys"
+    # ensure all keys are deleted in case only 1 was missing
+    rm /home/nnlc/.ssh/comma /input/comma /home/nnlc/.ssh/comma.pub /input/comma.pub
+    # generate new keys
     ssh-keygen -t ed25519 -f /home/nnlc/.ssh/comma -N ""
 
     # keys need to be stored to a persistent volume so they aren't regenerated whenever the container is recreated
@@ -21,20 +35,43 @@ if [ $COLLECT_RLOGS ]; then
   fi
 
   # Add SSH config file entry for comma
-  echo "Adding SSH config for comma device"
-  touch /home/nnlc/.ssh/config
-  echo "Host comma" > /home/nnlc/.ssh/config
-  echo "User comma" > /home/nnlc/.ssh/config
-  echo "Hostname $COMMA_IP" > /home/nnlc/.ssh/config
+  if [[ ! -f "/home/nnlc/.ssh/config" ]]; then
+    # Add config file if not present
+    echo "Adding SSH config for comma device"
+    touch /home/nnlc/.ssh/config
+    echo "Host comma" > /home/nnlc/.ssh/config
+    echo "User comma" > /home/nnlc/.ssh/config
+    echo "Hostname $COMMA_IP" > /home/nnlc/.ssh/config
+  else
+    if output=$(cat '/home/nnlc/.ssh/config') && [[ $output != *$COMMA_IP* ]]; then
+      # Recreate config file with correct entry if COMMA_IP not present
+      # This will wipe any edits to the ssh config file
+      rm /home/nnlc/.ssh/config
+      touch /home/nnlc/.ssh/config
+      echo "Host comma" > /home/nnlc/.ssh/config
+      echo "User comma" > /home/nnlc/.ssh/config
+      echo "Hostname $COMMA_IP" > /home/nnlc/.ssh/config
+    else
+      echo "SSH config file already exists with correct IP. Nothing to do."
+    fi
+  fi
 
-  if [ $AUTOMATE_RLOGS ]; then
+  # Add cron job to automatically collect logs if enabled
+  if [[ -n $AUTOMATE_RLOGS ]]; then
     # Set up rlog collection cronjob
-    if [[ -f "/etc/crontabs/nnlc" ]]; then
+    if [[ -n $RLOG_CRON ]]; then
+      cron_schedule=$RLOG_CRON
+    else
+      cron_schedule="00 0-23/6 * * *"
+    fi
+    if [[ ! -f "/etc/crontabs/nnlc" ]]; then
+      # Create crontab for user if not set
       touch /etc/crontabs/nnlc
       chown "nnlc":"nnlc" "/etc/crontabs/nnlc"
       crontab -u "nnlc" "/etc/crontabs/nnlc"
     fi
-    (crontab -u nnlc -l ; echo "00 0-23/6 * * * /home/nnlc/rlog_collect.sh") | crontab -
+    # Set cron schedule
+    # This wipes any custom edits to crontab
+    (crontab -u nnlc -l ; echo "$cron_schedule /home/nnlc/rlog_collect.sh") | crontab -
   fi
-
 fi

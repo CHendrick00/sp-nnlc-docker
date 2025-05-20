@@ -17,7 +17,7 @@ This will run an automated rlog collection script which will save any new rlogs 
 ### rlog processing
 - AMD and Nvidia GPUs are supported for model generation. See environment variable 'GPU'.
 
-### Filetree Explanation
+## Filetree Explanation
 /</br>
 |- /input (mounted volume)</br>
 |--- /$VEHICLE</br>
@@ -35,6 +35,9 @@ This will run an automated rlog collection script which will save any new rlogs 
 |------- process.sh</br>
 |------- ...
 
+## GPU Support
+### AMD
+- Install required host packages following [AMDGPU Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html#prerequisites)
 
 ### todo
 - override $HOME,GENESIS
@@ -47,3 +50,4 @@ This will run an automated rlog collection script which will save any new rlogs 
 - copy output to output volume
 - finish filetree example
 - gpu support instructions
+- harden SSH key logic
