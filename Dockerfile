@@ -47,7 +47,7 @@ RUN cd /home/nnlc/setup
 RUN wget https://repo.radeon.com/amdgpu-install/6.4/ubuntu/noble/amdgpu-install_6.4.60400-1_all.deb
 RUN apt-get install -y ./amdgpu-install_6.4.60400-1_all.deb
 RUN apt-get update
-RUN apt-get install -y rocm "linux-headers-$(uname -r)" "linux-modules-extra-$(uname -r)" amdgpu-dkms
+RUN apt-get install -y rocm amdgpu-dkms
 # NVIDIA
 RUN apt-get install -y gcc nvidia-driver-570 nvidia-cuda-toolkit nvidia-cudnn
 
