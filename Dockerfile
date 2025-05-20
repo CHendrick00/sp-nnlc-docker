@@ -53,7 +53,7 @@ RUN apt-get install -y gcc nvidia-driver-570 nvidia-cuda-toolkit nvidia-cudnn
 
 # Install julia packages as nnlc user
 USER nnlc
-RUN /home/nnlc/install-julia-packages.sh
+RUN /home/nnlc/setup/install-julia-packages.sh
 
 # volumes
 VOLUME /input
