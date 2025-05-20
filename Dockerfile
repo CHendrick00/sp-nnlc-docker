@@ -31,7 +31,7 @@ RUN groupadd -g 1234 nnlc && \
 RUN mkdir /input /output
 RUN chown -R nnlc:nnlc /input /output /home/nnlc
 RUN chmod u+x /home/nnlc/*.sh /home/nnlc/setup/*.sh /home/nnlc/nnlc/process.sh
-RUN usermod -a -G video,render nnlc
+# RUN usermod -a -G video,render nnlc
 
 # Download required tools and repos to nnlc user home directory
 USER nnlc
