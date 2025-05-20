@@ -17,7 +17,7 @@ This will run an automated rlog collection script which will save any new rlogs 
 ### rlog processing
 - AMD and Nvidia GPUs are supported for model generation. See environment variable 'GPU'.
 
-## Filetree Explanation
+## Filetree
 /</br>
 |- /input (mounted volume)</br>
 |--- /$VEHICLE</br>
@@ -30,7 +30,7 @@ This will run an automated rlog collection script which will save any new rlogs 
 |----- install-nnlc-dependencies.sh (This script is run when creating the docker image. Downloads required tools and dependencies to /home/nnlc/nnlc.)</br>
 |----- rlog_collect.sh (collects rlogs from comma over SSH)</br>
 |----- /Downloads</br>
-|------- /rlogs (automnatically created rlog processing directory)</br>
+|------- /rlogs (automatically created rlog processing directory)</br>
 |----- /nnlc (automatically created directory containing processing tools)</br>
 |------- process.sh</br>
 |------- ...
@@ -40,14 +40,10 @@ This will run an automated rlog collection script which will save any new rlogs 
 - Install required host packages following [AMDGPU Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html#prerequisites)
 
 ### todo
-- override $HOME,GENESIS
-  - own source forks?
 - logging?
 - documentation and usage instructions
-- gpu support
 - docker compose example
-- run setup as correct users
-- copy output to output volume
 - finish filetree example
-- gpu support instructions
-- harden SSH key logic
+- gpu support host instructions
+- credits
+- script to push output model to comma?
