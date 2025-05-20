@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
+	echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."
+	exit 1
+fi
+
+
 # Set directory to folder where the project
 # assets like sunnypilot and OP_ML_FF dirs are
 cd /home/nnlc/nnlc
@@ -51,13 +57,13 @@ ls -1f *.zst | while read SD; do
 done
 
 # Create output dir for various plots
-PD=$RLD/plots_torque
-if [ -d $PD ]; then
-	rm -rf ${PD}-
-	mv $PD ${PD}-
-fi
-mkdir $PD
-bail_on_error
+# PD=$RLD/plots_torque
+# if [ -d $PD ]; then
+# 	rm -rf ${PD}-
+# 	mv $PD ${PD}-
+# fi
+# mkdir $PD
+# bail_on_error
 
 echo
 echo "Preprocessing rlogs in $RLOGS..."
@@ -68,8 +74,18 @@ if [ ! -d $OP ]; then
 	bail_on_error
 fi
 
-# Updating hardcoded paths on processing scripts
 cd $PROCDIR/sunnypilot
+# Update hardcoded paths on processing and training scripts
+sed -i "s/home, 'Downloads'/\/$OP/" tools/tuning/lat.py > /dev/null 2>&1
+
+sed -i "s/~\/Downloads/\/$OP/" tools/tuning/lat_plot.py > /dev/null 2>&1
+
+sed -i "s/ and has_upper_word(dir_name)//" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s/"GENESIS"/$VEHICLE/" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+
+sed -i "s/\$home_dir\/Downloads\/rlogs\/output\/GENESIS/\/$OP/" $PROCDIR/OP_ML_FF/latmodel_temporal.jl > /dev/null 2>&1
+
+# Begin processing
 sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
 
 cd $PROCDIR/sunnypilot

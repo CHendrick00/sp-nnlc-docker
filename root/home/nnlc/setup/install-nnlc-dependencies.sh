@@ -75,7 +75,7 @@ if [ ! -s sunnypilot/tools/tuning/lat.py ]; then
  git clone https://github.com/mmmorks/sunnypilot.git
  bail_on_error
  cd sunnypilot
- git checkout staging-merged
+ git checkout 4084ee5e895bc97ca3cef369a3e866a59cef1adf
  bail_on_error
  cd ..
 else
