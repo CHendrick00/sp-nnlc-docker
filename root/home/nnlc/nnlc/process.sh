@@ -17,7 +17,7 @@ conda activate nnlc
 RD=/input/rlogs/$VEHICLE/$DEVICE_ID
 
 # rlogs processing dir - input path to preprocessing
-RLD=/output/rlogs
+RLD=/output/rlogs/$VEHICLE
 RLOGS=$RLD/$DEVICE_ID
 
 # Create processing directories if they don't exist
