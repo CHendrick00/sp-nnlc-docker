@@ -10,12 +10,16 @@
 
 #=============================================
 # MODIFY THESE
-diroutbase="/rlogs"
+diroutbase="/input/rlogs"
 # EACH LINE OF `device_car_list` is an ssh host followed by a subfolder name to be created within `diroutbase`
 device_car_list=(
 "comma $VEHICLE"
 )
 #=============================================
+if [[ ! -d $diroutbase ]]; then
+  echo "Creating $diroutbase"
+  mkdir $diroutbase
+fi
 
 check_dir="$diroutbase"
 cd "$check_dir"
@@ -34,18 +38,18 @@ fetch_rlogs () {
     echo "$1 ($2): skipping: *** DEVICE IS ONROAD ***"
     return
   fi
-  output=$(ifconfig)
-  if echo "$output" | grep -q "netmask"; then
-    if ! echo "$output" | grep -Eq "inet (10\.0\.|10\.1\.|192\.168\.|200\.200\.)"; then
-      echo "Not connected to home WiFi."
-      return
-    else
-      echo "Connected to home WiFi"
-    fi
-  else
-    echo "ifconfig command did not run correctly."
-    return
-  fi
+  # output=$(ifconfig)
+  # if echo "$output" | grep -q "netmask"; then
+  #   if ! echo "$output" | grep -Eq "inet (10\.0\.|10\.1\.|192\.168\.|200\.200\.)"; then
+  #     echo "Not connected to home WiFi."
+  #     return
+  #   else
+  #     echo "Connected to home WiFi"
+  #   fi
+  # else
+  #   echo "ifconfig command did not run correctly."
+  #   return
+  # fi
   dirout="$diroutbase/$2/$DONGLEID"
   delete_transferred_files=false
 

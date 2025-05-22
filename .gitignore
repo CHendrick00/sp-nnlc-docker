@@ -1,3 +1,5 @@
 env-vars
 /scripts/*
-/examples/*
+docker-compose-amd.yml
+docker-compose-nvidia.yml
+bugs

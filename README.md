@@ -13,6 +13,7 @@ To enable:
 
 This will run an automated rlog collection script which will save any new rlogs to the volume you mount under /inputs/rlogs every 6 hours. Custom schedules are not currently supported.
 **ADD manual exec instructions**
+- Windows: `\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes`
 
 ### rlog processing
 - AMD and Nvidia GPUs are supported for model generation. See environment variable 'GPU'.
@@ -38,6 +39,16 @@ This will run an automated rlog collection script which will save any new rlogs 
 ## GPU Support
 ### AMD
 - Install required host packages following [AMDGPU Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html#prerequisites)
+
+## Testing Model File
+```
+-disable updates: echo -en "1" > /data/params/d/DisableUpdates
+-re-enable updates: echo -en "0" > /data/params/d/DisableUpdates
+```
+```
+/data/openpilot/sunnypilot/neural_network_data/neural_network_lateral_control
+```
+https://github.com/sunnypilot/opendbc/blob/master-new/opendbc/car/subaru/fingerprints.py
 
 ### todo
 - logging?

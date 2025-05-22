@@ -1,37 +1,39 @@
-#!/bin/bash
-
+#!/command/with-contenv bash
 # Set up SSH keys if rlog collection is enabled
 if [[ -n $COLLECT_RLOGS ]]; then
+  if [[ ! -d "/home/nnlc/.ssh/" ]]; then
+    echo "Creating user .ssh directory"
+    mkdir "/home/nnlc/.ssh/"
+  fi
   # Check if keys are already configured correctly
-  if [[ -f "/input/comma.pub" ]] && [[ -f "/input/comma" ]]; then
-    if [[ $(cmp -s "/input/comma.pub" "/home/nnlc/.ssh/comma.pub") -eq 0 ]] && [[ $(cmp -s "/input/comma" "/home/nnlc/.ssh/comma") -eq 0 ]]; then
+  if [[ -f "/input/id_ed25519.pub" ]] && [[ -f "/input/id_ed25519" ]]; then
+    if [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ $(cmp -s "/input/id_ed25519.pub" "/home/nnlc/.ssh/id_ed25519.pub") -eq 0 ]] && [[ $(cmp -s "/input/id_ed25519" "/home/nnlc/.ssh/id_ed25519") -eq 0 ]]; then
       echo "SSH keys found and are synced between .ssh and input directories. Nothing to do."
-    fi
     else
       # Symlink keys under /input to .ssh if required (ex. custom SSH keys supplied under /input)
       echo "Recreating symlinks from SSH keys under /input to .ssh"
-      rm /home/nnlc/.ssh/comma /home/nnlc/.ssh/comma.pub
-      ln -s /input/comma /home/nnlc/.ssh/comma
-      ln -s /input/comma.pub /home/nnlc/.ssh/comma.pub
+      rm /home/nnlc/.ssh/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub > /dev/null 2>&1
+      ln -s /input/id_ed25519 /home/nnlc/.ssh/id_ed25519
+      ln -s /input/id_ed25519.pub /home/nnlc/.ssh/id_ed25519.pub
     fi
-  elif [[ -f "/home/nnlc/.ssh/comma" ]] && [[ -f "/home/nnlc/.ssh/comma.pub" ]]; then
+  elif [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]]; then
     # use existing keys if available in .ssh (ex. key(s) were deleted from /input)
     echo "SSH keys found in .ssh but not under /input. Adding links to SSH keys under /input for persistence."
-    rm /input/comma /input/comma.pub
-    ln -s /home/nnlc/.ssh/comma /input/comma
-    ln -s /home/nnlc/.ssh/comma.pub /input/comma.pub
+    rm /input/id_ed25519 /input/id_ed25519.pub > /dev/null 2>&1
+    ln -s /home/nnlc/.ssh/id_ed25519 /input/id_ed25519
+    ln -s /home/nnlc/.ssh/id_ed25519.pub /input/id_ed25519.pub
   else
     # Generate keys if none exist under /input or .ssh
     echo "No usable SSH key set found. Generating new keys"
     # ensure all keys are deleted in case only 1 was missing
-    rm /home/nnlc/.ssh/comma /input/comma /home/nnlc/.ssh/comma.pub /input/comma.pub
+    rm /home/nnlc/.ssh/id_ed25519 /input/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub /input/id_ed25519.pub > /dev/null 2>&1
     # generate new keys
-    ssh-keygen -t ed25519 -f /home/nnlc/.ssh/comma -N ""
+    ssh-keygen -t id_ed25519 -f /home/nnlc/.ssh/id_ed25519 -N ""
 
     # keys need to be stored to a persistent volume so they aren't regenerated whenever the container is recreated
     echo "Persisting keys under /input"
-    cp /home/nnlc/.ssh/comma /input/comma
-    cp /home/nnlc/.ssh/comma.pub /input/comma.pub
+    cp /home/nnlc/.ssh/id_ed25519 /input/id_ed25519
+    cp /home/nnlc/.ssh/id_ed25519.pub /input/id_ed25519.pub
   fi
 
   # Add SSH config file entry for comma
@@ -39,18 +41,14 @@ if [[ -n $COLLECT_RLOGS ]]; then
     # Add config file if not present
     echo "Adding SSH config for comma device"
     touch /home/nnlc/.ssh/config
-    echo "Host comma" > /home/nnlc/.ssh/config
-    echo "User comma" > /home/nnlc/.ssh/config
-    echo "Hostname $COMMA_IP" > /home/nnlc/.ssh/config
+    echo -e "Host comma\nUser comma\nHostname $COMMA_IP\nStrictHostKeyChecking accept-new" > /home/nnlc/.ssh/config
   else
     if output=$(cat '/home/nnlc/.ssh/config') && [[ $output != *$COMMA_IP* ]]; then
       # Recreate config file with correct entry if COMMA_IP not present
       # This will wipe any edits to the ssh config file
-      rm /home/nnlc/.ssh/config
+      rm /home/nnlc/.ssh/config > /dev/null 2>&1
       touch /home/nnlc/.ssh/config
-      echo "Host comma" > /home/nnlc/.ssh/config
-      echo "User comma" > /home/nnlc/.ssh/config
-      echo "Hostname $COMMA_IP" > /home/nnlc/.ssh/config
+      echo -e "Host comma\nUser comma\nHostname $COMMA_IP\nStrictHostKeyChecking accept-new" > /home/nnlc/.ssh/config
     else
       echo "SSH config file already exists with correct IP. Nothing to do."
     fi
@@ -60,18 +58,16 @@ if [[ -n $COLLECT_RLOGS ]]; then
   if [[ -n $AUTOMATE_RLOGS ]]; then
     # Set up rlog collection cronjob
     if [[ -n $RLOG_CRON ]]; then
+      echo "Setting collection schedule as: $RLOG_CRON"
       cron_schedule=$RLOG_CRON
     else
+      echo "Using default schedule: 00 0-23/6 * * *"
       cron_schedule="00 0-23/6 * * *"
-    fi
-    if [[ ! -f "/etc/crontabs/nnlc" ]]; then
-      # Create crontab for user if not set
-      touch /etc/crontabs/nnlc
-      chown "nnlc":"nnlc" "/etc/crontabs/nnlc"
-      crontab -u "nnlc" "/etc/crontabs/nnlc"
     fi
     # Set cron schedule
     # This wipes any custom edits to crontab
-    (crontab -u nnlc -l ; echo "$cron_schedule /home/nnlc/rlog_collect.sh") | crontab -
+    echo "Setting crontab to enable automated rlog collection"
+    (crontab -u nnlc -l 2>/dev/null; echo "*/5 * * * * /path/to/job -with args") | crontab -
+    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/rlog_collect.sh") | crontab -
   fi
 fi

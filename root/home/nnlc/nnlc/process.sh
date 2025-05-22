@@ -14,11 +14,20 @@ cd /home/nnlc/nnlc
 conda activate nnlc
 
 # dir containing rlogs downloaded from Comma device using included rlog collection script - will copy rlog.zst files to $RLOGS
-RD=/input/$VEHICLE/$DEVICE_ID
+RD=/input/rlogs/$VEHICLE/$DEVICE_ID
 
 # rlogs processing dir - input path to preprocessing
-RLD=/home/nnlc/Downloads/rlogs
+RLD=/output/rlogs
 RLOGS=$RLD/$DEVICE_ID
+
+# Create processing directories if they don't exist
+if [[ ! -d $RLD ]]; then
+  mkdir $$RLD
+fi
+
+if [[ ! -d $RLOGS ]]; then
+  mkdir $$RLOGS
+fi
 
 # Output path - note this is hard-coded as ~/Downloads in processing step 2
 # and training steps.  To change this, edit the processing and training scripts.
