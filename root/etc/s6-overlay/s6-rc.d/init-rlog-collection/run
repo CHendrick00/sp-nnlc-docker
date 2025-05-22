@@ -67,7 +67,6 @@ if [[ -n $COLLECT_RLOGS ]]; then # TODO: check values instead of existing + COMM
     # Set cron schedule
     # This wipes any custom edits to crontab
     echo "Setting crontab to enable automated rlog collection"
-    (crontab -u nnlc -l 2>/dev/null; echo "*/5 * * * * /path/to/job -with args") | crontab -
     (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/rlog_collect.sh") | crontab -
   fi
 fi
