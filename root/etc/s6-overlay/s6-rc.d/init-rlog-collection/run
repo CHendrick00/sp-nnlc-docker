@@ -1,6 +1,6 @@
 #!/command/with-contenv bash
 # Set up SSH keys if rlog collection is enabled
-if [[ -n $COLLECT_RLOGS ]]; then
+if [[ -n $COLLECT_RLOGS ]]; then # TODO: check values instead of existing + COMMA_IP and DEVICE_ID check
   if [[ ! -d "/home/nnlc/.ssh/" ]]; then
     echo "Creating user .ssh directory"
     mkdir "/home/nnlc/.ssh/"
