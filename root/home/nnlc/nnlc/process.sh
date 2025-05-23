@@ -117,9 +117,9 @@ echo
 tools/tuning/lat_to_csv_torquennd.py
 bail_on_error
 
-# echo
-# echo -n "Press Enter to continue with training, or Ctrl-C to exit: "
-# read INP
+echo
+echo -n "Press Enter to continue with training, or Ctrl-C to exit: "
+read INP
 
 echo
 cd $OP

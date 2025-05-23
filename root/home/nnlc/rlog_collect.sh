@@ -38,6 +38,9 @@ fetch_rlogs () {
     echo "$1 ($2): skipping: *** DEVICE IS ONROAD ***"
     return
   fi
+
+  # Don't need to check below as docker container should be running on bridge network mode
+
   # output=$(ifconfig)
   # if echo "$output" | grep -q "netmask"; then
   #   if ! echo "$output" | grep -Eq "inet (10\.0\.|10\.1\.|192\.168\.|200\.200\.)"; then
@@ -50,6 +53,7 @@ fetch_rlogs () {
   #   echo "ifconfig command did not run correctly."
   #   return
   # fi
+
   dirout="$diroutbase/$2/$DONGLEID"
   delete_transferred_files=false
 
