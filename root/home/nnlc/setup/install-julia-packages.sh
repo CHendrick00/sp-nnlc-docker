@@ -42,7 +42,8 @@ echo
 # AMD		AMDGPU
 # Apple Metal	Metal
 # Intel oneAPI	oneAPI
-julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN"); Pkg.add("AMDGPU")'
+julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN");'
+# julia -e 'import Pkg; Pkg.add("AMDGPU")'
 bail_on_error
 
 exit 0

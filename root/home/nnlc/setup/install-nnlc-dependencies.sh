@@ -76,6 +76,7 @@ if [ ! -s sunnypilot/tools/tuning/lat.py ]; then
  bail_on_error
  cd sunnypilot
  git checkout 4084ee5e895bc97ca3cef369a3e866a59cef1adf
+ rm -rf ./.git
  bail_on_error
  cd ..
 else
@@ -91,6 +92,7 @@ if [ ! -s OP_ML_FF/latmodel_temporal.jl ]; then
  bail_on_error
  cd OP_ML_FF
  git checkout 5c3e5a39620f8822acf01bed3bf484ffc187f31a
+ rm -rf ./.git
  bail_on_error
  cd ..
 else
@@ -105,6 +107,10 @@ if [ ! -d /home/nnlc/.julia ]; then
  wget https://julialang-s3.julialang.org/bin/linux/x64/1.11/julia-1.11.5-linux-x86_64.tar.gz
  bail_on_error
  tar zxf julia-1.11.5-linux-x86_64.tar.gz
+ bail_on_error
+ rm julia-1.11.5-linux-x86_64.tar.gz
+ bail_on_error
+ echo "export PATH=$PATH:/home/nnlc/nnlc/julia-1.11.5/bin" >> /home/nnlc/.bashrc
  bail_on_error
 else
  echo "*** Julia appears to already be installed - assuming julia in \$PATH "
