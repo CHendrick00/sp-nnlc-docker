@@ -1,9 +1,13 @@
 #!/command/with-contenv bash
-# Set up SSH keys if rlog collection is enabled
-if [[ -n $COLLECT_RLOGS ]] && [[ $COLLECT_RLOGS == 'true' ]]; then
+
+# Save environment variables to a file readable for cron
+env > /home/nnlc/nnlc.env
+
+# Set up SSH keys if rlog importing is enabled
+if [[ -n $IMPORT_RLOGS ]] && [[ $IMPORT_RLOGS == 'true' ]]; then
   # Check for other required variables
   if [[ ! -n $COMMA_IP ]] || [[ ! -n $DEVICE_ID ]]; then
-    echo "COMMA_IP and DEVICE_ID must be set to collect rlogs. Aborting..."
+    echo "COMMA_IP and DEVICE_ID must be set to import rlogs. Aborting..."
     exit 0
   fi
   # Create SSH directory
@@ -12,34 +16,34 @@ if [[ -n $COLLECT_RLOGS ]] && [[ $COLLECT_RLOGS == 'true' ]]; then
     mkdir "/home/nnlc/.ssh/"
   fi
   # Check if keys are already configured correctly
-  if [[ -f "/input/id_ed25519.pub" ]] && [[ -f "/input/id_ed25519" ]]; then
-    if [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ $(cmp -s "/input/id_ed25519.pub" "/home/nnlc/.ssh/id_ed25519.pub") -eq 0 ]] && [[ $(cmp -s "/input/id_ed25519" "/home/nnlc/.ssh/id_ed25519") -eq 0 ]]; then
+  if [[ -f "/data/config/id_ed25519.pub" ]] && [[ -f "/data/config/id_ed25519" ]]; then
+    if [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ $(cmp -s "/data/config/id_ed25519.pub" "/home/nnlc/.ssh/id_ed25519.pub") -eq 0 ]] && [[ $(cmp -s "/data/config/id_ed25519" "/home/nnlc/.ssh/id_ed25519") -eq 0 ]]; then
       echo "SSH keys found and are synced between .ssh and input directories. Nothing to do."
     else
-      # Symlink keys under /input to .ssh if required (ex. container was recreated)
-      echo "Recreating symlinks from SSH keys under /input to .ssh"
+      # Symlink keys under /data/config to .ssh if required (ex. container was recreated)
+      echo "Recreating symlinks from SSH keys under /data/config to .ssh"
       rm /home/nnlc/.ssh/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub > /dev/null 2>&1
-      ln -s /input/id_ed25519 /home/nnlc/.ssh/id_ed25519
-      ln -s /input/id_ed25519.pub /home/nnlc/.ssh/id_ed25519.pub
+      ln -s /data/config/id_ed25519 /home/nnlc/.ssh/id_ed25519
+      ln -s /data/config/id_ed25519.pub /home/nnlc/.ssh/id_ed25519.pub
     fi
   elif [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]]; then
-    # use existing keys if available in .ssh (ex. key(s) were deleted from /input)
-    echo "SSH keys found in .ssh but not under /input. Adding links to SSH keys under /input for persistence."
-    rm /input/id_ed25519 /input/id_ed25519.pub > /dev/null 2>&1
-    ln -s /home/nnlc/.ssh/id_ed25519 /input/id_ed25519
-    ln -s /home/nnlc/.ssh/id_ed25519.pub /input/id_ed25519.pub
+    # use existing keys if available in .ssh (ex. key(s) were deleted from /data/config)
+    echo "SSH keys found in .ssh but not under /data/config. Adding links to SSH keys under /data/config for persistence."
+    rm /data/config/id_ed25519 /data/config/id_ed25519.pub > /dev/null 2>&1
+    ln -s /home/nnlc/.ssh/id_ed25519 /data/config/id_ed25519
+    ln -s /home/nnlc/.ssh/id_ed25519.pub /data/config/id_ed25519.pub
   else
-    # Generate keys if none exist under /input or .ssh
+    # Generate keys if none exist under /data/config or .ssh
     echo "No usable SSH key set found. Generating new keys"
     # ensure all keys are deleted in case only 1 was missing
-    rm /home/nnlc/.ssh/id_ed25519 /input/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub /input/id_ed25519.pub > /dev/null 2>&1
+    rm /home/nnlc/.ssh/id_ed25519 /data/config/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub /data/config/id_ed25519.pub > /dev/null 2>&1
     # generate new keys
     ssh-keygen -t id_ed25519 -f /home/nnlc/.ssh/id_ed25519 -N ""
 
     # keys need to be stored to a persistent volume so they aren't regenerated whenever the container is recreated
-    echo "Persisting keys under /input"
-    cp /home/nnlc/.ssh/id_ed25519 /input/id_ed25519
-    cp /home/nnlc/.ssh/id_ed25519.pub /input/id_ed25519.pub
+    echo "Persisting keys under /data/config"
+    cp /home/nnlc/.ssh/id_ed25519 /data/config/id_ed25519
+    cp /home/nnlc/.ssh/id_ed25519.pub /data/config/id_ed25519.pub
   fi
 
   # Add SSH config file entry for comma
@@ -60,16 +64,16 @@ if [[ -n $COLLECT_RLOGS ]] && [[ $COLLECT_RLOGS == 'true' ]]; then
     fi
   fi
 
-  # Add cron job to automatically collect logs if enabled
+  # Add cron job to automatically import logs if enabled
   if [[ -n $AUTOMATE_RLOGS ]] && [[ $AUTOMATE_RLOGS == 'true' ]]; then
     # Create directory to log to. Log for last run will be stored under rlog_cron.txt
-    if [[ ! -d "/output/logs" ]]; then
+    if [[ ! -d "/data/logs" ]]; then
       echo "Creating log directory for cronjob output"
-      mkdir "/output/logs"
+      mkdir "/data/logs"
     fi
-    # Set up rlog collection cronjob
+    # Set up rlog import cronjob
     if [[ -n $RLOG_CRON ]]; then
-      echo "Setting collection schedule as: $RLOG_CRON"
+      echo "Setting rlog import schedule as: $RLOG_CRON"
       cron_schedule=$RLOG_CRON
     else
       echo "Using default schedule: 00 0-23/6 * * *"
@@ -77,7 +81,8 @@ if [[ -n $COLLECT_RLOGS ]] && [[ $COLLECT_RLOGS == 'true' ]]; then
     fi
     # Set cron schedule
     # This wipes any custom edits to crontab
-    echo "Setting crontab to enable automated rlog collection"
-    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/rlog_collect.sh > /output/logs/rlog_cron.txt") | crontab -
+    echo "Setting crontab to enable automated rlog imports"
+    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog_import.sh > /data/logs/rlog-import_cron.txt") | crontab -
+    service cron start
   fi
 fi

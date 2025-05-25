@@ -8,9 +8,12 @@
 # it will not be transferred again, so you can use the same directory
 # and leave the files there
 
+# Load environment variables if running from cron
+. /home/nnlc/nnlc.env
+
 #=============================================
 # MODIFY THESE
-diroutbase="/input/rlogs"
+diroutbase="/data/rlogs"
 # EACH LINE OF `device_car_list` is an ssh host followed by a subfolder name to be created within `diroutbase`
 device_car_list=(
 "comma $VEHICLE"

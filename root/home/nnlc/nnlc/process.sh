@@ -11,27 +11,30 @@ fi
 cd /home/nnlc/nnlc
 
 # activate nnlc env
+. /home/nnlc/.bashrc
 conda activate nnlc
 
-# dir containing rlogs downloaded from Comma device using included rlog collection script - will copy rlog.zst files to $RLOGS
-RD=/input/rlogs/$VEHICLE/$DEVICE_ID
+# dir containing nnlc tools
+PROCDIR=/home/nnlc/nnlc
+
+# dir containing rlogs downloaded from Comma device using included rlog import script - will copy rlog.zst files to $RLOGS
+RD=/data/rlogs/$VEHICLE/$DEVICE_ID
 
 # rlogs processing dir - input path to preprocessing
-RLD=/output/rlogs/$VEHICLE
+RLD=/data/output/$VEHICLE/rlogs
 RLOGS=$RLD/$DEVICE_ID
 
 # Create processing directories if they don't exist
 if [[ ! -d $RLD ]]; then
-  mkdir $$RLD
+  mkdir -p $RLD
 fi
-
 if [[ ! -d $RLOGS ]]; then
-  mkdir $$RLOGS
+  mkdir -p $RLOGS
 fi
 
 # Output path - note this is hard-coded as ~/Downloads in processing step 2
 # and training steps.  To change this, edit the processing and training scripts.
-OP=/output/$VEHICLE
+OP=/data/output/$VEHICLE
 
 # bail on nonzero RC function
 bail_on_error() {
@@ -65,34 +68,34 @@ ls -1f *.zst | while read SD; do
 	fi
 done
 
-# Create output dir for various plots
-# PD=$RLD/plots_torque
-# if [ -d $PD ]; then
-# 	rm -rf ${PD}-
-# 	mv $PD ${PD}-
-# fi
-# mkdir $PD
-# bail_on_error
-
 echo
 echo "Preprocessing rlogs in $RLOGS..."
 echo
 
 if [ ! -d $OP ]; then
-	mkdir $OP
+	mkdir -p $OP
 	bail_on_error
 fi
 
+# Archive previous plots_torque
+PD=$OP/plots_torque
+if [ -d $PD ]; then
+	rm -rf ${PD}-
+	mv $PD ${PD}-
+fi
+bail_on_error
+
 cd $PROCDIR/sunnypilot
 # Update hardcoded paths on processing and training scripts
-sed -i "s/home, 'Downloads'/\/$OP/" tools/tuning/lat.py > /dev/null 2>&1
+sed -i "s:home, 'Downloads':'/$OP':g" tools/tuning/lat.py > /dev/null 2>&1
 
-sed -i "s/~\/Downloads/\/$OP/" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:~/Downloads:$OP:g" tools/tuning/lat_plot.py > /dev/null 2>&1
 
-sed -i "s/ and has_upper_word(dir_name)//" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
-sed -i "s/"GENESIS"/$VEHICLE/" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:os.path.join(os.path.expanduser('~'), 'Downloads/rlogs/output/'):'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s: and has_upper_word(dir_name)::g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:\"GENESIS\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 
-sed -i "s/\$home_dir\/Downloads\/rlogs\/output\/GENESIS/\/$OP/" $PROCDIR/OP_ML_FF/latmodel_temporal.jl > /dev/null 2>&1
+sed -i "s:\$home_dir/Downloads/rlogs/output/GENESIS:/$OP:g" $PROCDIR/OP_ML_FF/latmodel_temporal.jl > /dev/null 2>&1
 
 # Begin processing
 sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1

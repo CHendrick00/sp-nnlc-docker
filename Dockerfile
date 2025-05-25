@@ -40,16 +40,19 @@ COPY root/ /
 RUN groupadd -g 1234 nnlc && \
     useradd -m -u 1234 -g nnlc nnlc
 
-# Create volume mounts
-RUN mkdir /input /output
+# Create data volume filetree
+RUN mkdir /data \
+  /data/config \
+  /data/logs \
+  /data/output \
+  /data/rlogs
 
 # Set nnlc user permissions
-RUN chown -R nnlc:nnlc /input /output /home/nnlc
-RUN chmod u+x /home/nnlc/*.sh /home/nnlc/setup/*.sh /home/nnlc/nnlc/process.sh
+RUN chown -R nnlc:nnlc /data /home/nnlc
+RUN chmod u+x /home/nnlc/setup/*.sh /home/nnlc/nnlc/*.sh
 # RUN usermod -a -G video,render nnlc
 
-VOLUME /input
-VOLUME /output
+VOLUME /data
 
 # Download required tools and repos to nnlc user home directory
 USER nnlc
@@ -58,15 +61,17 @@ RUN \
   . /home/nnlc/.bashrc && \
   /home/nnlc/setup/install-julia-packages.sh
 
-# Install GPU drivers
-USER root
-# AMD
-# RUN wget https://repo.radeon.com/amdgpu-install/6.4/ubuntu/noble/amdgpu-install_6.4.60400-1_all.deb
-# RUN apt-get install -y ./amdgpu-install_6.4.60400-1_all.deb
-# RUN apt-get update
-# RUN apt-get install -y rocm amdgpu-dkms
+# Make cronjobs executable and add script shortcuts
+RUN chmod u+s $(which cron) && \
+  ln -sf /home/nnlc/nnlc/process.sh /usr/local/bin/nnlc-process && \
+  ln -sf /home/nnlc/nnlc/rlog_import.sh /usr/local/bin/rlog-import
 
-# NVIDIA
+# Install GPU-specific packages
+USER root
+## AMD
+### TBD
+
+## NVIDIA
 RUN \
   cd /tmp && \
   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-ubuntu2404.pin && \
@@ -85,6 +90,6 @@ RUN \
     /var/lib/apt/lists/* \
     /tmp/*
 
-# Run init scripts as nnlc user
+# Run as nnlc user
 USER nnlc
 ENTRYPOINT ["/init"]
