@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
-	echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."
-	exit 1
+  echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."
+  exit 1
 fi
 
 
@@ -38,21 +38,21 @@ OP=/data/output/$VEHICLE
 
 # bail on nonzero RC function
 bail_on_error() {
-	RC=$?
-	if [ $RC -ne 0 ]; then
-		echo
-		echo "*** bailing with RC=$RC"
-		echo
-		exit 1
-	fi
+  RC=$?
+  if [ $RC -ne 0 ]; then
+    echo
+    echo "*** bailing with RC=$RC"
+    echo
+    exit 1
+  fi
 }
 
 if [ ! -d sunnypilot -o ! -d OP_ML_FF ]; then
-	echo
-	echo "*** Before using this script, make sure you're cd-ed into a"
-        echo "    prepared NNLC training project directory."
-	echo
-	exit 1
+  echo
+  echo "*** Before using this script, make sure you're cd-ed into a"
+  echo "    prepared NNLC training project directory."
+  echo
+  exit 1
 fi
 
 echo
@@ -60,12 +60,12 @@ echo "Copying/updating rlog.zst files from $RD to $RLOGS..."
 echo
 cd $RD
 ls -1f *.zst | while read SD; do
-	NF="${SD/_/|}"
-	RLF="$RLOGS/$NF"
-	if [ ! -s $RLF ]; then
-		cp -v $SD $RLF
-		bail_on_error
-	fi
+  NF="${SD/_/|}"
+  RLF="$RLOGS/$NF"
+  if [ ! -s $RLF ]; then
+    cp -v $SD $RLF
+    bail_on_error
+  fi
 done
 
 echo
@@ -73,15 +73,15 @@ echo "Preprocessing rlogs in $RLOGS..."
 echo
 
 if [ ! -d $OP ]; then
-	mkdir -p $OP
-	bail_on_error
+  mkdir -p $OP
+  bail_on_error
 fi
 
 # Archive previous plots_torque
 PD=$OP/plots_torque
 if [ -d $PD ]; then
-	rm -rf ${PD}-
-	mv $PD ${PD}-
+  rm -rf ${PD}-
+  mv $PD ${PD}-
 fi
 bail_on_error
 

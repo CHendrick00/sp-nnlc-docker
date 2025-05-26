@@ -5,13 +5,13 @@ NNLC=nnlc
 
 # bail on nonzero RC function
 bail_on_error() {
-        RC=$?
-        if [ $RC -ne 0 ]; then
-                echo
-                echo "*** bailing with RC=$RC"
-                echo
-                exit 1
-        fi
+  RC=$?
+  if [ $RC -ne 0 ]; then
+    echo
+    echo "*** bailing with RC=$RC"
+    echo
+    exit 1
+  fi
 }
 
 echo
