@@ -1,0 +1,26 @@
+---
+services:
+  nnlc:
+    image: ghcr.io/CHendrick00/sp-nnlc-docker:latest
+    # pull_policy: always
+    container_name: nnlc
+    environment:
+      - COMMA_IP=xxx.xxx.xxx.xxx
+      - DEVICE_ID=DEVICE_ID_HERE
+      - ENABLE_RLOGS_IMPORTER=true
+      - ENABLE_RLOGS_SCHEDULER=true
+      - RLOGS_SCHEDULE='0 0-23/6 * * *'
+      - VEHICLE=vehicle
+      - TZ=America/Los_Angeles
+    # Comment deploy section if not using Nvidia GPU - see https://docs.docker.com/compose/how-tos/gpu-support/
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - data:/data
+volumes:
+  data:
