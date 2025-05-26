@@ -2,6 +2,7 @@ FROM ubuntu:24.04
 
 # set build variables
 ARG DEBIAN_FRONTEND="noninteractive"
+ARG GPU="nvidia"
 
 # Install stuff
 RUN \
@@ -26,8 +27,6 @@ RUN \
 # Configure S6 Overlay
 ARG S6_OVERLAY_VERSION="3.2.0.2"
 ARG S6_OVERLAY_ARCH="x86_64"
-
-# add s6 overlay
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz /tmp
@@ -48,13 +47,10 @@ RUN mkdir /data \
   /data/rlogs
 
 # Set nnlc user permissions
-RUN chown -R nnlc:nnlc /data /home/nnlc
+RUN chown -R nnlc:nnlc /data /home/nnlc/nnlc
 RUN chmod u+x /home/nnlc/setup/*.sh /home/nnlc/nnlc/*.sh
-# RUN usermod -a -G video,render nnlc
 
-VOLUME /data
-
-# Download required tools and repos to nnlc user home directory
+# Download NNLC tools and install dependencies
 USER nnlc
 RUN \
   /home/nnlc/setup/install-nnlc-dependencies.sh && \
@@ -62,34 +58,17 @@ RUN \
   /home/nnlc/setup/install-julia-packages.sh
 
 # Make cronjobs executable and add script shortcuts
-RUN chmod u+s $(which cron) && \
-  ln -sf /home/nnlc/nnlc/process.sh /usr/local/bin/nnlc-process && \
-  ln -sf /home/nnlc/nnlc/rlog_import.sh /usr/local/bin/rlog-import
-
-# Install GPU-specific packages
 USER root
-## AMD
-### TBD
+RUN chmod u+s $(which cron) && \
+  ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
+  ln -sf /home/nnlc/nnlc/rlog-import-log.sh /usr/local/bin/rlog-import
 
-## NVIDIA
-RUN \
-  cd /tmp && \
-  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-ubuntu2404.pin && \
-  mv cuda-ubuntu2404.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
-  wget https://developer.download.nvidia.com/compute/cuda/12.9.0/local_installers/cuda-repo-ubuntu2404-12-9-local_12.9.0-575.51.03-1_amd64.deb && \
-  dpkg -i cuda-repo-ubuntu2404-12-9-local_12.9.0-575.51.03-1_amd64.deb && \
-  cp /var/cuda-repo-ubuntu2404-12-9-local/cuda-*-keyring.gpg /usr/share/keyrings/ && \
-  wget https://developer.download.nvidia.com/compute/cudnn/9.10.1/local_installers/cudnn-local-repo-ubuntu2404-9.10.1_1.0-1_amd64.deb && \
-  dpkg -i cudnn-local-repo-ubuntu2404-9.10.1_1.0-1_amd64.deb && \
-  cp /var/cudnn-local-repo-ubuntu2404-9.10.1/cudnn-*-keyring.gpg /usr/share/keyrings/ && \
-  apt-get update && \
-  apt-get -y install cuda-libraries-12-9 cudnn-cuda-12 && \
-  apt-get autoremove && \
-  apt-get clean && \
-  rm -rf \
-    /var/lib/apt/lists/* \
-    /tmp/*
+# Install GPU required packages
+WORKDIR /tmp
+RUN /home/nnlc/setup/install-gpu-packages.sh
 
-# Run as nnlc user
+# Container initialization
 USER nnlc
+VOLUME /data
+WORKDIR /
 ENTRYPOINT ["/init"]

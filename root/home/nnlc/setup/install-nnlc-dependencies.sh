@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # project - directory and conda environment name (default)
 NNLC=nnlc

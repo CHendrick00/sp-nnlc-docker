@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
 	echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."

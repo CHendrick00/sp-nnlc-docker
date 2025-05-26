@@ -4,7 +4,7 @@
 env > /home/nnlc/nnlc.env
 
 # Set up SSH keys if rlog importing is enabled
-if [[ -n $IMPORT_RLOGS ]] && [[ $IMPORT_RLOGS == 'true' ]]; then
+if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; then
   # Check for other required variables
   if [[ ! -n $COMMA_IP ]] || [[ ! -n $DEVICE_ID ]]; then
     echo "COMMA_IP and DEVICE_ID must be set to import rlogs. Aborting..."
@@ -65,16 +65,16 @@ if [[ -n $IMPORT_RLOGS ]] && [[ $IMPORT_RLOGS == 'true' ]]; then
   fi
 
   # Add cron job to automatically import logs if enabled
-  if [[ -n $AUTOMATE_RLOGS ]] && [[ $AUTOMATE_RLOGS == 'true' ]]; then
-    # Create directory to log to. Log for last run will be stored under rlog_cron.txt
+  if [[ -n $ENABLE_RLOGS_SCHEDULER ]] && [[ $ENABLE_RLOGS_SCHEDULER == 'true' ]]; then
+    # Create directory to log to. Log for last run will be stored under RLOGS_SCHEDULE.txt
     if [[ ! -d "/data/logs" ]]; then
       echo "Creating log directory for cronjob output"
       mkdir "/data/logs"
     fi
     # Set up rlog import cronjob
-    if [[ -n $RLOG_CRON ]]; then
-      echo "Setting rlog import schedule as: $RLOG_CRON"
-      cron_schedule=$RLOG_CRON
+    if [[ -n $RLOGS_SCHEDULE ]]; then
+      echo "Setting rlog import schedule as: $RLOGS_SCHEDULE"
+      cron_schedule=$RLOGS_SCHEDULE
     else
       echo "Using default schedule: 00 0-23/6 * * *"
       cron_schedule="00 0-23/6 * * *"
@@ -82,7 +82,7 @@ if [[ -n $IMPORT_RLOGS ]] && [[ $IMPORT_RLOGS == 'true' ]]; then
     # Set cron schedule
     # This wipes any custom edits to crontab
     echo "Setting crontab to enable automated rlog imports"
-    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog_import.sh > /data/logs/rlog-import_cron.txt") | crontab -
+    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog_import.sh > /data/logs/rlog-import_cron_log.txt") | crontab -
     service cron start
   fi
 fi
