@@ -4,7 +4,7 @@
 1. Follow the [installation instructions](#installation) for your host OS to install docker and create the sp-nnlc-docker container.
 2. Import rlogs by running `rlog-import` on the container OR copy existing rlogs with the correct naming scheme to `/data/rlogs` OR copy the comma's `/data/media/0/realdata` directory to `/data/rlogs` and run `rlog-rename` on the container.
 3. Generate the model by running `nnlc-process` on the container.
-4. Follow the instructions in [Testing Models]($testing-models) to upload your generated model to your comma device for testing.
+4. Follow the instructions in [Testing Models](#testing-models) to upload your generated model to your comma device for testing.
 
 ## Features and Usage
 
@@ -54,7 +54,7 @@ In the event you have rlogs copied directly from the comma device with the origi
 3. See the renamed files under `/data/rlogs/$VEHICLE/$DEVICE_ID`
 4. Optional. Delete the files under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
 
-## [Installation](#installation)
+## Installation
 
 ### Windows
 1. Enable virtualization in BIOS. Refer to your motherboard's documentation for where this setting is located. Typically this is named 'VT-x' or 'SVM' and located under CPU Configuration or similar.
@@ -73,14 +73,14 @@ In the event you have rlogs copied directly from the comma device with the origi
 - Mounting an existing Windows path to the data volume is difficult, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
 
 ### Linux - Debian/Ubuntu
-1. TODO
+1. Pending testing
 
 
 ### Others
 - Other host operating systems are untested and may or may not work out-of-box.
 
 
-## [GPU Support](#gpu-support)
+## GPU Support
 Some packages may need to be installed on the host system in order to use the GPU for model processing inside the container. First, ensure you have updated drivers for your GPU installed on the host. Afterwards, see below:
 
 ### NVIDIA
@@ -96,7 +96,7 @@ Some packages may need to be installed on the host system in order to use the GP
 - AMD, Intel, and others are untested and unsupported at this time.
 
 
-## [Testing Models]($testing-models)
+## Testing Models
 ### Testing Instructions
 After generating a model, the following steps must be performed to test on your vehicle. **BE CAREFUL** - any models you generate are entirely experimental and are in no way guaranteed to be safe. I would recommend asking for feedback on your model's lat_accel_vs_torque.png in the sunnypilot discord first before proceeding with testing.
 
@@ -136,7 +136,7 @@ After generating a model, the following steps must be performed to test on your 
 `sudo reboot now`
 
 
-## [Environment Variables](#environment-variables)
+## Environment Variables
 | Variable Name          | Description                                                      | Example Value       | Default Value  | Allowed Values                                                        | Required                      | Notes                                                                                                                                       |
 |------------------------|------------------------------------------------------------------|---------------------|----------------|-----------------------------------------------------------------------|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | COMMA_IP               | Local IP of the comma device                                     | 192.168.1.100       | -              | -                                                                     | If ENABLE_RLOGS_IMPORTER=true | Highly recommended to assign the comma a static IP in your router to prevent this value from changing                                       |
