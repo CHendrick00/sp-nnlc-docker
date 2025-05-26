@@ -1,8 +1,8 @@
 # sp-nnlc-docker
 
 ## Quickstart Guide
-1. Follow the installation instructions for your host OS: [Installation](#installation)
-2. 
+1. Follow the installation instructions for your host OS to create the sp-nnlc-docker container: [Installation](#installation)
+2. Add rlogs to the /data/rlogs directory
 
 ## Features
 
@@ -28,18 +28,27 @@ Importing rlogs from the comma device directly from the docker container is not 
 The container includes all required tools and packages to process rlogs into an NNLC model.
 
 **Instructions**
-- Ensure rlog.zst files are present under /data/rlogs/$VEHICLE/$DEVICE_ID and named following the required format (example): $DEVICE_ID_ROUTE--rlog.zst where ROUTE is in the format 'ROUTE1--ROUTE2--PART' and is the folder name from /data/media/0/realdata.
-- Run the rlog processing and model generation script using docker exec:</br>
+1. Ensure rlog.zst files are present under /data/rlogs/$VEHICLE/$DEVICE_ID and named following the required format (example): $DEVICE_ID_ROUTE--rlog.zst where ROUTE is in the format 'ROUTE1--ROUTE2--PART' and is the folder name from /data/media/0/realdata.
+2. Run the rlog processing and model generation script using docker exec:</br>
   `docker exec -it sp-nnlc-docker bash -c nnlc-process`
-  - After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
-- Key output files:
-  - VEHICLE_NAME_torque_adjusted_eps.json - NNLC model file
-  - Graphs:
+3. After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
     - plots_torque/*.png
     - $VEHICLE lat_accel_vs_torque.png
+4. After model generation, review the following outputs:
+    - VEHICLE_NAME_torque_adjusted_eps.json - NNLC model file
     - VEHICLE_NAME_torque_adjusted_eps/*.png
+
 - Note: Only CPU training is currently tested.
 
+### Renaming Existing Rlogs
+In the event you have rlogs copied directly from the comma device with the original directory structure and naming scheme, you can still use these by renaming them to the required format with the included script.
+
+**Instructions**
+1. From the host, copy the existing logs to the data volume mount location under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
+2. Run the rlog renaming script using docker exec:</br>
+  `docker exec -it sp-nnlc-docker bash -c rlog-rename`
+3. See the renamed files under `/data/rlogs/$VEHICLE/$DEVICE_ID`
+4. Optional. Delete the files under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
 
 ## [Installation](#installation)
 

@@ -18,6 +18,7 @@ RUN \
   python3-pip \
   python3-setuptools \
   python3-wheel \
+  rsync \
   wget \
   xz-utils \
   zstd && \
@@ -62,7 +63,8 @@ RUN \
 USER root
 RUN chmod u+s $(which cron) && \
   ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
-  ln -sf /home/nnlc/nnlc/rlog-import-log.sh /usr/local/bin/rlog-import
+  ln -sf /home/nnlc/nnlc/rlog-import-log.sh /usr/local/bin/rlog-import && \
+  ln -sf /home/nnlc/nnlc/rlog-rename.sh /usr/local/bin/rlog-rename
 
 # Install GPU required packages
 WORKDIR /tmp
