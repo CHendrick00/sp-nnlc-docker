@@ -88,7 +88,7 @@ fetch_rlogs () {
       while IFS= read -r line; do
         if [[ -n $line ]]; then
           echo "Copying: "$line
-          rsync -avP --dry-run $line >/dev/null
+          rsync -avP $line >/dev/null
         fi
       done <<< "$fileliststr"
       echo "$1 ($2): Transfer complete (returned $?)"
