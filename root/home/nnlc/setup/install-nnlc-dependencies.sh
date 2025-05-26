@@ -30,7 +30,6 @@ if [ ! -d $NNLCD ]; then
 else
   echo "Warning: $NNLCD already exists - continuing"
 fi
-# mkdir -pv /home/nnlc/Downloads/plots 2> /dev/null
 
 echo
 if [ ! -d /home/nnlc/miniconda3 ]; then
