@@ -1,30 +1,34 @@
 # sp-nnlc-docker
 
+## Quickstart Guide
+1. Follow the installation instructions for your host OS: [Installation](#installation)
+2. 
+
 ## Features
+
 ### Automated Rlog Collection
-Importing rlogs from the comma device directly from the docker container is supported and encouraged in order to ensure they are named correctly and saved in the proper format and location for processing.
+Importing rlogs from the comma device directly from the docker container is not only supported but also encouraged in order to ensure the files are named correctly and saved in the proper format and location for processing.
 
 **Instructions**
-- Reference the [Environment Variables](#environment-variables) section for the following variables to pass when creating the container:
-  - COMMA_IP
-  - DEVICE_ID
-  - ENABLE_RLOGS_IMPORTER
-  - ENABLE_RLOGS_SCHEDULER
-  - RLOGS_SCHEDULE
-- [Add the SSH public key located under /data/config/id_ed25519.pub to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account#adding-a-new-ssh-key-to-your-account)
-  - If you don't mount /data as a volume, this value can be retrieved with:</br>
+1. Reference the [Environment Variables](#environment-variables) section for the following variables to pass when creating the container:
+    - COMMA_IP
+    - DEVICE_ID
+    - ENABLE_RLOGS_IMPORTER
+    - ENABLE_RLOGS_SCHEDULER
+    - RLOGS_SCHEDULE
+2. [Add the SSH public key located under /data/config/id_ed25519.pub to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account#adding-a-new-ssh-key-to-your-account)
+    - If you don't mount /data as a volume, this value can be retrieved with:</br>
   `docker exec -it sp-nnlc-docker bash -c cat /data/config/id_ed25519.pub`
-- [Enable SSH on your Comma and add your GitHub username](https://docs.comma.ai/how-to/connect-to-comma/#ssh)
-
-If ENABLE_RLOGS_IMPORTER and ENABLE_RLOGS_SCHEDULER is set:
-- This container will run an automated rlog collection script which will save any new rlogs to /data/rlogs following the cron schedule supplied with RLOGS_SCHEDULE or every 6 hours if RLOGS_SCHEDULE is not set.
-
-If ENABLE_RLOGS_IMPORTER is set and ENABLE_RLOGS_SCHEDULER is unset:
-- rlogs can be imported from comma device on-demand using docker exec:</br>
-  `docker exec -it sp-nnlc-docker bash -c rlog-import`
+3. [Enable SSH on your Comma and add your GitHub username](https://docs.comma.ai/how-to/connect-to-comma/#ssh)
+4. Rlogs can be manually imported by running the following:</br>
+`docker exec -it sp-nnlc-docker bash -c rlog-import`
+5. If the scheduled rlog importer is enabled and the container is left running, rlogs will be imported automatically every 6 hours or following the schedule provided with RLOGS_SCHEDULE.
 
 ### NNLC Model Generation
-- Only CPU training is currently tested.
+The container includes all required tools and packages to process rlogs into an NNLC model.
+
+**Instructions**
+- Ensure rlog.zst files are present under /data/rlogs/$VEHICLE/$DEVICE_ID and named following the required format (example): $DEVICE_ID_ROUTE--rlog.zst where ROUTE is in the format 'ROUTE1--ROUTE2--PART' and is the folder name from /data/media/0/realdata.
 - Run the rlog processing and model generation script using docker exec:</br>
   `docker exec -it sp-nnlc-docker bash -c nnlc-process`
   - After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
@@ -34,33 +38,50 @@ If ENABLE_RLOGS_IMPORTER is set and ENABLE_RLOGS_SCHEDULER is unset:
     - plots_torque/*.png
     - $VEHICLE lat_accel_vs_torque.png
     - VEHICLE_NAME_torque_adjusted_eps/*.png
+- Note: Only CPU training is currently tested.
 
-## Installation and Usage
+
+## [Installation](#installation)
+
 ### Windows
-
 1. Enable virtualization in BIOS. Refer to your motherboard's documentation for where this setting is located. Typically this is named 'VT-x' or 'SVM' and located under CPU Configuration or similar.
 2. From PowerShell, install [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install):</br>`wsl --install`
 3. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with WSL 2 backend.
-4. If using a GPU, following the instructions in [GPU Support](#gpu-support)
-4. Download the provided docker-compose-windows.yml file for Windows
-5. Update environment variables for your vehicle and comma device ID
-6. Create the container with:</br>`docker compose -f C:\PATH-TO\docker-compose-windows.yml up -d`
-  - This automatically creates the required 'data' volume accessible from the following path:</br>
-  `\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\data`
-5. Docker Exec commands can be run directly in Docker Desktop: `Containers > sp-nnlc-docker > Exec`
+4. If using a GPU, follow the instructions in [GPU Support](#gpu-support).
+5. Download the provided docker-compose.yml file.
+6. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
+7. Create the container (example):</br>`docker compose -f C:\PATH-TO\docker-compose.yml up -d`
+    - This will create the **data** volume accessible from the following path:</br>
+  `\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\sp-nnlc-docker_data`
+
+**Notes**: 
+- Docker Exec commands can be run directly in the Docker Desktop GUI if desired: `Containers > sp-nnlc-docker > Exec`
+  - `docker exec -it sp-nnlc-docker bash -c ` should be removed from supplied commands when running directly in the container.
+- Mounting an existing Windows path to the data volume is difficult, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
 
 ### Linux - Debian/Ubuntu
 1. TODO
+
+
+### Others
+- Other host operating systems are untested and may or may not work out-of-box.
+
 
 ## [GPU Support](#gpu-support)
 Some packages may need to be installed on the host system in order to use the GPU for model processing inside the container. First, ensure you have updated drivers for your GPU installed on the host. Following that, see below:
 
 ### NVIDIA
+
 - **Linux**
-  - Install [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host
+  - Install [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
+
 - **Windows**
-  - Support should be included with Docker Desktop using WSL 2
+  - Support should be included with Docker Desktop using WSL 2.
     - [Documentation](https://docs.docker.com/desktop/features/gpu/)
+
+### Other
+- AMD, Intel, and others are untested and unsupported at this time.
+
 
 ## Testing Models
 ### Testing Instructions
@@ -99,6 +120,7 @@ After generating a model, the following steps must be performed to test on your 
 2. If you backed up an existing model, revert the name change with:</br>
 `mv VEHICLE_NAME.bk VEHICLE_NAME.json`
 
+
 ## [Environment Variables](#environment-variables)
 | Variable Name          | Description                                                      | Example Value       | Default Value  | Allowed Values                                                        | Required                      | Notes                                                                                                                                       |
 |------------------------|------------------------------------------------------------------|---------------------|----------------|-----------------------------------------------------------------------|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
@@ -110,6 +132,7 @@ After generating a model, the following steps must be performed to test on your 
 | VEHICLE                | Name of vehicle to use when naming directories                   | ioniq6              | -              | -                                                                     | Yes                           | Does not have to match vehicle name in opendbc. Do NOT include any spaces or special characters in this value.                              |
 | TZ                     | Timezone used by the container                                   | America/Los_Angeles | UTC            | See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List | No, but recommended           | Useful to set with ENABLE_RLOGS_SCHEDULER in order for the scheduled runs to happen at the expected time                                    |
 
+
 ## Data Volume Filetree
 See below for a diagram of the data volume directory structure, where certain files are located, what files you should expect to see after running the processing script, and which of these files are important.
 ```
@@ -118,7 +141,9 @@ See below for a diagram of the data volume directory structure, where certain fi
 │   ├── config/     (persistent SSH keys)
 │   │   ├── ... 
 │   ├── logs/       (script output logs)
-│   │   ├── rlog-import_cron.txt
+│   │   ├── nnlc-process_log.txt
+│   │   ├── rlog-import_log.txt
+│   │   ├── rlog-import_scheduled_log.txt
 │   ├── output/
 │   │   ├── $VEHICLE/
 │   │   │   ├── plots_torque/ (Fit data plots - Processing Step 1)
@@ -140,17 +165,31 @@ See below for a diagram of the data volume directory structure, where certain fi
 │   │   │   │   ├── ... (rlogs downloaded using rlog_collect.sh)
 ```
 
-## Untested Functionality
-- Nvidia GPU on Windows host
+
+## Misc
+
+### Logging
+The following logs are stored under `/data/logs` for basic debugging purposes. These are overwritten each time the associated script is run, and as such only include the log for the latest run.
+- nnlc-process_log.txt
+  - Generated by `nnlc-process`
+- rlog-import_log.txt
+  - Generated by `rlog-import`
+- rlog-import_scheduled_log.txt
+  - Generated by scheduled rlog import job
+
+### Notable Untested Functionality
+The following may or may not work out-of-box. These items have not been tested and as such may not exactly match the documentation or could require additional work.
 - Angle steering vehicles
+- MacOS or Linux hosts besides Ubuntu
+- Nvidia GPU on Windows host
+
 
 ## Credits
 TODO
 
+
 ## TODO
-- logging
-- documentation and usage instructions
-- docker compose example(s)
-- gpu support host instructions
+- finalize documentation and usage instructions
+- test nvidia support
+- rlog renaming script?
 - credits
-- script to push output model to comma?

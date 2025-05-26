@@ -17,8 +17,8 @@ if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; th
   fi
   # Check if keys are already configured correctly
   if [[ -f "/data/config/id_ed25519.pub" ]] && [[ -f "/data/config/id_ed25519" ]]; then
-    if [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ $(cmp -s "/data/config/id_ed25519.pub" "/home/nnlc/.ssh/id_ed25519.pub") -eq 0 ]] && [[ $(cmp -s "/data/config/id_ed25519" "/home/nnlc/.ssh/id_ed25519") -eq 0 ]]; then
-      echo "SSH keys found and are synced between .ssh and input directories. Nothing to do."
+    if [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ $(cmp -s "/data/config/id_ed25519.pub" "/home/nnlc/.ssh/id_ed25519.pub") ]] && [[ $(cmp -s "/data/config/id_ed25519" "/home/nnlc/.ssh/id_ed25519") ]]; then
+      echo "SSH keys found and are synced between .ssh and config directories. Nothing to do."
     else
       # Symlink keys under /data/config to .ssh if required (ex. container was recreated)
       echo "Recreating symlinks from SSH keys under /data/config to .ssh"
@@ -38,7 +38,7 @@ if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; th
     # ensure all keys are deleted in case only 1 was missing
     rm /home/nnlc/.ssh/id_ed25519 /data/config/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub /data/config/id_ed25519.pub > /dev/null 2>&1
     # generate new keys
-    ssh-keygen -t id_ed25519 -f /home/nnlc/.ssh/id_ed25519 -N ""
+    ssh-keygen -t ed25519 -f /home/nnlc/.ssh/id_ed25519 -N ""
 
     # keys need to be stored to a persistent volume so they aren't regenerated whenever the container is recreated
     echo "Persisting keys under /data/config"
@@ -82,7 +82,7 @@ if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; th
     # Set cron schedule
     # This wipes any custom edits to crontab
     echo "Setting crontab to enable automated rlog imports"
-    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog_import.sh > /data/logs/rlog-import_cron_log.txt") | crontab -
+    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog-import_scheduled_log.sh") | crontab -
     service cron start
   fi
 fi

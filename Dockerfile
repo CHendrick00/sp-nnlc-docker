@@ -12,6 +12,7 @@ RUN \
   cron \
   git \
   imagemagick \
+  nano \
   openssh-client \
   python3 \
   python3-pip \
@@ -47,7 +48,7 @@ RUN mkdir /data \
   /data/rlogs
 
 # Set nnlc user permissions
-RUN chown -R nnlc:nnlc /data /home/nnlc/nnlc
+RUN chown -R nnlc:nnlc /data /home/nnlc
 RUN chmod u+x /home/nnlc/setup/*.sh /home/nnlc/nnlc/*.sh
 
 # Download NNLC tools and install dependencies
