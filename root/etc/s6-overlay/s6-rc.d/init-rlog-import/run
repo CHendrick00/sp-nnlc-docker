@@ -3,6 +3,10 @@
 # Save environment variables to a file readable for cron
 env > /home/nnlc/nnlc.env
 
+if [[ ! -d "/data/config" ]]; then
+  mkdir -p '/data/config'
+fi
+
 # Set up SSH keys if rlog importing is enabled
 if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; then
   # Check for other required variables

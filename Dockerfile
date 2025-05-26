@@ -59,9 +59,11 @@ RUN \
   . /home/nnlc/.bashrc && \
   /home/nnlc/setup/install-julia-packages.sh
 
-# Make cronjobs executable and add script shortcuts
+# Set permissions and add script shortcuts
 USER root
 RUN chmod u+s $(which cron) && \
+  chmod a+x /etc/s6-overlay/s6-rc.d/init-rlog-import/run && \
+  chmod u+rwx -R /data && \
   ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
   ln -sf /home/nnlc/nnlc/rlog-import-log.sh /usr/local/bin/rlog-import && \
   ln -sf /home/nnlc/nnlc/rlog-rename.sh /usr/local/bin/rlog-rename
