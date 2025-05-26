@@ -1,10 +1,12 @@
 # sp-nnlc-docker
 
 ## Quickstart Guide
-1. Follow the installation instructions for your host OS to create the sp-nnlc-docker container: [Installation](#installation)
-2. Add rlogs to the /data/rlogs directory
+1. Follow the [installation instructions](#installation) for your host OS to install docker and create the sp-nnlc-docker container.
+2. Import rlogs by running `rlog-import` on the container OR copy existing rlogs with the correct naming scheme to `/data/rlogs` OR copy the comma's `/data/media/0/realdata` directory to `/data/rlogs` and run `rlog-rename` on the container.
+3. Generate the model by running `nnlc-process` on the container.
+4. Follow the instructions in [Testing Models]($testing-models) to upload your generated model to your comma device for testing.
 
-## Features
+## Features and Usage
 
 ### Automated Rlog Collection
 Importing rlogs from the comma device directly from the docker container is not only supported but also encouraged in order to ensure the files are named correctly and saved in the proper format and location for processing.
@@ -28,7 +30,7 @@ Importing rlogs from the comma device directly from the docker container is not 
 The container includes all required tools and packages to process rlogs into an NNLC model.
 
 **Instructions**
-1. Ensure rlog.zst files are present under /data/rlogs/$VEHICLE/$DEVICE_ID and named following the required format (example): $DEVICE_ID_ROUTE--rlog.zst where ROUTE is in the format 'ROUTE1--ROUTE2--PART' and is the folder name from /data/media/0/realdata.
+1. Ensure rlog.zst files are present under `/data/rlogs/$VEHICLE/$DEVICE_ID` and named following the required format (example): `[DEVICE_ID]_[ROUTE]--rlog.zst`
 2. Run the rlog processing and model generation script using docker exec:</br>
   `docker exec -it sp-nnlc-docker bash -c nnlc-process`
 3. After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
@@ -77,7 +79,7 @@ In the event you have rlogs copied directly from the comma device with the origi
 
 
 ## [GPU Support](#gpu-support)
-Some packages may need to be installed on the host system in order to use the GPU for model processing inside the container. First, ensure you have updated drivers for your GPU installed on the host. Following that, see below:
+Some packages may need to be installed on the host system in order to use the GPU for model processing inside the container. First, ensure you have updated drivers for your GPU installed on the host. Afterwards, see below:
 
 ### NVIDIA
 
@@ -92,7 +94,7 @@ Some packages may need to be installed on the host system in order to use the GP
 - AMD, Intel, and others are untested and unsupported at this time.
 
 
-## Testing Models
+## [Testing Models]($testing-models)
 ### Testing Instructions
 After generating a model, the following steps must be performed to test on your vehicle. **BE CAREFUL** - any models you generate are entirely experimental and are in no way guaranteed to be safe. I would recommend asking for feedback on your model's lat_accel_vs_torque.png in the sunnypilot discord first before proceeding with testing.
 
@@ -128,6 +130,8 @@ After generating a model, the following steps must be performed to test on your 
 `cd /data/openpilot/sunnypilot/neural_network_data/neural_network_lateral_control && rm VEHICLE_NAME.json`
 2. If you backed up an existing model, revert the name change with:</br>
 `mv VEHICLE_NAME.bk VEHICLE_NAME.json`
+3. Reboot the comma device.</br>
+`sudo reboot now`
 
 
 ## [Environment Variables](#environment-variables)
@@ -189,16 +193,58 @@ The following logs are stored under `/data/logs` for basic debugging purposes. T
 ### Notable Untested Functionality
 The following may or may not work out-of-box. These items have not been tested and as such may not exactly match the documentation or could require additional work.
 - Angle steering vehicles
-- MacOS or Linux hosts besides Ubuntu
+- Other hosts: MacOS or non-Ubuntu Linux
 - Nvidia GPU on Windows host
 
 
 ## Credits
-TODO
+<table id='credit'>
+<tr>
+
+<td align="center">
+<a href='https://github.com/sunnypilot'>
+<img src='https://avatars.githubusercontent.com/u/129032390?s=200&v=4' width='110px;'>
+</a>
+<br>
+<a href='https://github.com/sunnypilot'>sunnypilot</a>
+</td>
+
+<td align="center">
+<a href='https://github.com/twilsonco'>
+<img src='https://avatars.githubusercontent.com/u/7284371?v=4' width='110px;'>
+</a>
+<br>
+<a href='https://github.com/twilsonco'>twilsonco</a>
+</td>
+
+<td align="center">
+<a href='https://github.com/mmmorks'>
+<img src='https://avatars.githubusercontent.com/u/97648376?v=4' width='110px;'>
+</a>
+<br>
+<a href='https://github.com/mmmorks'>mmmorks</a>
+</td>
+
+<td align="center">
+<a href='https://github.com/wtogami'>
+<img src='https://avatars.githubusercontent.com/u/93665?v=4' width='110px;'>
+</a>
+<br>
+<a href='https://github.com/wtogami'>wtogami</a>
+</td>
+
+<td align="center">
+<img src='https://cdn.discordapp.com/avatars/955452888740667452/2141725ad8985989069112a5cab58f04.webp?size=128' width='110px;'>
+</a>
+<br>
+<a>syncword</a>
+</td>
+
+</tr>
+</table>
 
 
 ## TODO
 - finalize documentation and usage instructions
 - test nvidia support
-- rlog renaming script?
-- credits
+- AMD gpu support?
