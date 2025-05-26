@@ -19,28 +19,30 @@ Importing rlogs from the comma device directly from the docker container is not 
     - ENABLE_RLOGS_SCHEDULER
     - RLOGS_SCHEDULE
 2. [Add the SSH public key located under /data/config/id_ed25519.pub to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account#adding-a-new-ssh-key-to-your-account)
-    - If you don't mount /data as a volume, this value can be retrieved with:</br>
-  `docker exec -it sp-nnlc-docker bash -c cat /data/config/id_ed25519.pub`
+    - This value can be retrieved with:</br>
+  `docker exec -t sp-nnlc-docker bash -c "cat /data/config/id_ed25519.pub"`
 3. [Enable SSH on your Comma and add your GitHub username](https://docs.comma.ai/how-to/connect-to-comma/#ssh)
+    - Note: if you already have SSH set up on your comma, remove and readd your Github username to load the new SSH key.
 4. Rlogs can be manually imported by running the following:</br>
-`docker exec -it sp-nnlc-docker bash -c rlog-import`
+`docker exec -t sp-nnlc-docker bash -c rlog-import`
 5. If the scheduled rlog importer is enabled and the container is left running, rlogs will be imported automatically every 6 hours or following the schedule provided with RLOGS_SCHEDULE.
 
 ### NNLC Model Generation
 The container includes all required tools and packages to process rlogs into an NNLC model.
 
 **Instructions**
-1. Ensure rlog.zst files are present under `/data/rlogs/$VEHICLE/$DEVICE_ID` and named following the required format (example): `[DEVICE_ID]_[ROUTE]--rlog.zst`
+1. Ensure rlog.zst files are present under `/data/rlogs/$VEHICLE/$DEVICE_ID` and named according to the required format: `[DEVICE_ID]_[ROUTE]--rlog.zst`
 2. Run the rlog processing and model generation script using docker exec:</br>
   `docker exec -it sp-nnlc-docker bash -c nnlc-process`
 3. After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
-    - plots_torque/*.png
-    - $VEHICLE lat_accel_vs_torque.png
+    - `plots_torque/*.png`
+    - `$VEHICLE lat_accel_vs_torque.png`
 4. During the model generation step, make sure you see the expected device being used in the output:
 `using device: cpu` or `using device: gpu`
 5. After model generation completes, review the following outputs:
-    - VEHICLE_NAME_torque_adjusted_eps.json - NNLC model file
-    - VEHICLE_NAME_torque_adjusted_eps/*.png
+    - `VEHICLE_NAME_torque_adjusted_eps.json` - NNLC model file
+    - `VEHICLE_NAME_torque_adjusted_eps/*.png`
+6. Exit the container's shell with `exit`
 
 - Note: Only CPU training is currently tested.
 
@@ -50,7 +52,7 @@ In the event you have rlogs copied directly from the comma device with the origi
 **Instructions**
 1. From the host, copy the existing logs to the data volume mount location under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
 2. Run the rlog renaming script using docker exec:</br>
-  `docker exec -it sp-nnlc-docker bash -c rlog-rename`
+  `docker exec -t sp-nnlc-docker bash -c rlog-rename`
 3. See the renamed files under `/data/rlogs/$VEHICLE/$DEVICE_ID`
 4. Optional. Delete the files under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
 
@@ -69,8 +71,8 @@ In the event you have rlogs copied directly from the comma device with the origi
 
 **Notes**: 
 - Docker Exec commands can be run directly in the Docker Desktop GUI if desired: `Containers > sp-nnlc-docker > Exec`
-  - `docker exec -it sp-nnlc-docker bash -c ` should be removed from supplied commands when running directly in the container.
-- Mounting an existing Windows path to the data volume is difficult, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
+  - `docker exec -it sp-nnlc-docker bash -c` should be removed from supplied commands when running directly in the container.
+- Creating a bind mount from an existing Windows path to the data volume is difficult, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
 
 ### Linux - Debian/Ubuntu
 1. Install [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
@@ -82,8 +84,8 @@ In the event you have rlogs copied directly from the comma device with the origi
   `/var/lib/docker/volumes/sp-nnlc-docker_data/_data`
 
 **Notes**: 
-- The data volume is located under /var/lib/docker/volumes/sp-nnlc-docker_data, but is only accessible to the root user. To access the files, switch to root with `sudo su` or set permissions for your user.
-- Bind mounts are an alternative to the above, but have not been tested and may require some work to get host permissions on the mount directory correct.
+- The data volume is located under /var/lib/docker/volumes/sp-nnlc-docker_data, but parts of the path may only be accessible to the root user and not visible with `ls`. The contents can still be accessed from a rootless user with `cd /var/lib/docker/volumes/sp-nnlc-docker_data/_data`.
+- Bind mounts are an alternative to the above, but have not been tested and may require some work to get host permissions on the mount directory correct. `chown -R 1234:1234 /HOST/PATH` may be all that's required, but only try this if you know what you're doing.
 
 ### Others
 - Other host operating systems are untested and may or may not work out-of-box.
@@ -100,8 +102,7 @@ Some packages may need to be installed on the host system in order to use the GP
 
 
 - **Windows**
-  1. Support should already be included with Docker Desktop using WSL 2.
-    - [Documentation](https://docs.docker.com/desktop/features/gpu/)
+  1. Untested, but support should already be included with Docker Desktop using WSL 2. See [Docker GPU Support Documentation](https://docs.docker.com/desktop/features/gpu/).
 
 ### Other
 - AMD, Intel, and others are untested and unsupported at this time.
@@ -109,7 +110,7 @@ Some packages may need to be installed on the host system in order to use the GP
 
 ## Testing Models
 ### Testing Instructions
-After generating a model, the following steps must be performed to test on your vehicle. **BE CAREFUL** - any models you generate are entirely experimental and are in no way guaranteed to be safe. I would recommend asking for feedback on your model's lat_accel_vs_torque.png in the sunnypilot discord first before proceeding with testing.
+After generating a model, the following steps must be performed to test on your vehicle. **BE CAREFUL** - any models you generate are entirely experimental and are in no way guaranteed to be safe. I would recommend asking for feedback on your model's `lat_accel_vs_torque.png` in the sunnypilot discord first before proceeding with testing.
 
 **When testing, always be prepared to take control at any time!!!**
 1. SSH to the comma device, and run all following steps from this SSH session. If you don't have SSH to the comma set up on the host, you can do so from the container with:</br>
@@ -125,8 +126,10 @@ After generating a model, the following steps must be performed to test on your 
 7. If a model already exists with your car's name, rename the file to back it up with `mv VEHICLE_NAME.json VEHICLE_NAME.bk`
 8. Copy the contents of your VEHICLE_NAME_torque_adjusted_eps.json file to this directory using `nano VEHICLE_NAME.json` (safer) or with `echo "(paste file contents inside the quotes)" > VEHICLE_NAME.json`
 9. **IMPORTANT**: Check to make sure the contents of the new file appear to match VEHICLE_NAME_torque_adjusted_eps.json with `cat VEHICLE_NAME.json` or `nano VEHICLE_NAME.json`
-10. Reboot your comma device again, then start/stop your vehicle once to ensure the NNLC model has been reloaded.
-11. Ensure NNLC shows Exact Match for the expected vehicle.
+10. Reboot your comma device again, repeating Step 3
+11. Exit the container's shell with `exit`
+12. Start/stop your vehicle once to ensure the NNLC model has been reloaded.
+13. Ensure NNLC shows Exact Match for the expected vehicle.
 
 ### Reverting Testing Changes:
 **Method 1**
@@ -136,15 +139,19 @@ After generating a model, the following steps must be performed to test on your 
 `echo -en "0" > /data/params/d/DisableUpdates`
 3. Reboot the comma device.</br>
 `sudo reboot now`
-4. Install any pending updates - this will overwrite all changes in the data directory.
+4. Exit the container's shell with `exit`
+5. Install any pending updates - this will overwrite all changes in the data directory.
 
 **Method 2**
-1. Delete your model with:</br>
+1. SSH to the comma device:</br>
+`docker exec -it sp-nnlc-docker bash -c ssh comma`
+2. Delete your model with:</br>
 `cd /data/openpilot/sunnypilot/neural_network_data/neural_network_lateral_control && rm VEHICLE_NAME.json`
-2. If you backed up an existing model, revert the name change with:</br>
+3. If you backed up an existing model, revert the name change with:</br>
 `mv VEHICLE_NAME.bk VEHICLE_NAME.json`
-3. Reboot the comma device.</br>
+4. Reboot the comma device.</br>
 `sudo reboot now`
+5. Exit the container's shell with `exit`
 
 
 ## Environment Variables
@@ -164,38 +171,38 @@ See below for a diagram of the data volume directory structure, where certain fi
 ```
 /
 ├── data/ (VOLUME)
-│   ├── config/     (persistent SSH keys)
+│   ├── config/                                            (persistent SSH keys)
 │   │   ├── ... 
-│   ├── logs/       (script output logs)
+│   ├── logs/                                              (script output logs)
 │   │   ├── nnlc-process_log.txt
 │   │   ├── rlog-import_log.txt
 │   │   ├── rlog-import_scheduled_log.txt
 │   ├── output/
 │   │   ├── $VEHICLE/
-│   │   │   ├── plots_torque/ (Fit data plots - Processing Step 1)
-│   │   │   ├── plots_torque-/ (Fit data plots from previous run)
+│   │   │   ├── plots_torque/                              (Fit data plots - Processing Step 1)
+│   │   │   ├── plots_torque-/                             (Fit data plots from previous run)
 │   │   │   ├── rlogs/
 │   │   │   │   ├── $DEVICE_ID/
-│   │   │   │   │   ├── ... (rlogs copied from /data/rlogs and updated for processing)
-│   │   │   ├── VEHICLE_NAME_steer_cmd/ (Model generation output)
+│   │   │   │   │   ├── *.zst                              (Rlogs copied from /data/rlogs for processing)
+│   │   │   ├── VEHICLE_NAME_steer_cmd/                    (Model generation output)
 │   │   │   │   ├── ... 
-│   │   │   ├── VEHICLE_NAME_torque_adjusted_eps/ (Model generation output - graphs and model file)
-│   │   │   │   ├── VEHICLE_NAME_torque_adjusted_eps.json (Model file to be copied to comma)
-│   │   │   ├── *.csv (Processing files - Processing Step 2)
-│   │   │   ├── *.feather (Feather files - Processing Step 2)
-│   │   │   ├── *.lat (Lat files - Processing Step 1)
-│   │   │   ├── $VEHICLE lat_accel_vs_torque.png (Graph showing data points covered - Processing Step 2)
+│   │   │   ├── VEHICLE_NAME_torque_adjusted_eps/          (Model generation output - plots and model file)
+│   │   │   │   ├── VEHICLE_NAME_torque_adjusted_eps.json  (Model file to be copied to comma)
+│   │   │   ├── *.csv                                      (Processing files - Processing Step 2)
+│   │   │   ├── *.feather                                  (Feather files - Processing Step 2)
+│   │   │   ├── *.lat                                      (Lat files - Processing Step 1)
+│   │   │   ├── $VEHICLE lat_accel_vs_torque.png           (Main processing data plots - Processing Step 2)
 │   ├── rlogs/
 │   │   ├── $VEHICLE/
 │   │   │   ├── $DEVICE_ID/
-│   │   │   │   ├── ... (rlogs downloaded using rlog_collect.sh)
+│   │   │   │   ├── *.zst                                  (Rlogs downloaded using rlog-import)
 ```
 
 
 ## Misc
 
 ### Logging
-The following logs are stored under `/data/logs` for basic debugging purposes. These are overwritten each time the associated script is run, and as such only include the log for the latest run.
+The following logs are stored under `/data/logs` for basic debugging purposes. These are overwritten each time the associated script is run to prevent unintentional accumulation, and as such only include the log for the latest run.
 - nnlc-process_log.txt
   - Generated by `nnlc-process`
 - rlog-import_log.txt
@@ -255,9 +262,3 @@ The following may or may not work out-of-box. These items have not been tested a
 
 </tr>
 </table>
-
-
-## TODO
-- finalize documentation and usage instructions
-- test nvidia support
-- AMD gpu support?
