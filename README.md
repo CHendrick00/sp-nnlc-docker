@@ -36,7 +36,9 @@ The container includes all required tools and packages to process rlogs into an 
 3. After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
     - plots_torque/*.png
     - $VEHICLE lat_accel_vs_torque.png
-4. After model generation, review the following outputs:
+4. During the model generation step, make sure you see the expected device being used in the output:
+`using device: cpu` or `using device: gpu`
+5. After model generation completes, review the following outputs:
     - VEHICLE_NAME_torque_adjusted_eps.json - NNLC model file
     - VEHICLE_NAME_torque_adjusted_eps/*.png
 
