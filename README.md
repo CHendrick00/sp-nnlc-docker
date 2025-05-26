@@ -65,7 +65,7 @@ In the event you have rlogs copied directly from the comma device with the origi
 6. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
 7. Create the container (example):</br>`docker compose -f C:\PATH-TO\docker-compose.yml up -d`
     - This will create the **data** volume accessible from the following path:</br>
-  `\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\sp-nnlc-docker_data`
+  `\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\sp-nnlc-docker_data\_data`
 
 **Notes**: 
 - Docker Exec commands can be run directly in the Docker Desktop GUI if desired: `Containers > sp-nnlc-docker > Exec`
@@ -73,8 +73,17 @@ In the event you have rlogs copied directly from the comma device with the origi
 - Mounting an existing Windows path to the data volume is difficult, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
 
 ### Linux - Debian/Ubuntu
-1. Pending testing
+1. Install [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+2. Follow instructions in [GPU Support](#gpu-support) as required
+3. Download the provided docker-compose.yml file.
+4. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
+5. Create the container (example):</br>`docker compose -f /PATH-TO/docker-compose.yml up -d`
+    - This will create the **data** volume accessible from the following path - see note below:</br>
+  `/var/lib/docker/volumes/sp-nnlc-docker_data/_data`
 
+**Notes**: 
+- The data volume is located under /var/lib/docker/volumes/sp-nnlc-docker_data, but is only accessible to the root user. To access the files, switch to root with `sudo su` or set permissions for your user.
+- Bind mounts are an alternative to the above, but have not been tested and may require some work to get host permissions on the mount directory correct.
 
 ### Others
 - Other host operating systems are untested and may or may not work out-of-box.
@@ -86,10 +95,12 @@ Some packages may need to be installed on the host system in order to use the GP
 ### NVIDIA
 
 - **Linux**
-  - Install [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
+  1. Install [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
+  2. Restart the docker daemon with `sudo systemctl restart docker`
+
 
 - **Windows**
-  - Support should be included with Docker Desktop using WSL 2.
+  1. Support should already be included with Docker Desktop using WSL 2.
     - [Documentation](https://docs.docker.com/desktop/features/gpu/)
 
 ### Other
