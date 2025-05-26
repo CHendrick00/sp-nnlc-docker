@@ -59,7 +59,7 @@ RUN \
   . /home/nnlc/.bashrc && \
   /home/nnlc/setup/install-julia-packages.sh
 
-# Set permissions and add script shortcuts
+# Make cronjobs executable and add script shortcuts
 USER root
 RUN chmod u+s $(which cron) && \
   chown -R nnlc:nnlc /etc/s6-overlay/s6-rc.d/init-rlog-import && \
@@ -68,10 +68,6 @@ RUN chmod u+s $(which cron) && \
   ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
   ln -sf /home/nnlc/nnlc/rlog-import-log.sh /usr/local/bin/rlog-import && \
   ln -sf /home/nnlc/nnlc/rlog-rename.sh /usr/local/bin/rlog-rename
-
-# Install GPU required packages
-WORKDIR /tmp
-RUN /home/nnlc/setup/install-gpu-packages.sh
 
 # Container initialization
 USER nnlc

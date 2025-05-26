@@ -43,7 +43,9 @@ echo
 # Apple Metal	Metal
 # Intel oneAPI	oneAPI
 julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN");'
+julia -e 'using CUDA; CUDA.set_runtime_version!(v"12.8.0");' # Set a default runtime version to prevent errors on first processing run
 # julia -e 'import Pkg; Pkg.add("AMDGPU")'
+
 bail_on_error
 
 exit 0

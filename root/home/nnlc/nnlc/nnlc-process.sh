@@ -126,6 +126,16 @@ read INP
 
 echo
 cd $OP
+# Set CUDA runtime version if not latest supported by driver
+CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
+CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
+if [[ $CURRVER != $CUDAVER ]]; then
+  echo "Setting CUDA runtime version"
+  CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
+  julia $CUDASTR
+  echo "Updated CUDA runtime version:"
+  echo $(julia -e 'using CUDA;print(CUDA.runtime_version())')
+fi
 julia $PROCDIR/OP_ML_FF/latmodel_temporal.jl
 bail_on_error
 
