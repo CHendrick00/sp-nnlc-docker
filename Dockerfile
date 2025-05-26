@@ -62,7 +62,8 @@ RUN \
 # Set permissions and add script shortcuts
 USER root
 RUN chmod u+s $(which cron) && \
-  chmod a+x /etc/s6-overlay/s6-rc.d/init-rlog-import/run && \
+  chown -R nnlc:nnlc /etc/s6-overlay/s6-rc.d/init-rlog-import && \
+  chmod u+x /etc/s6-overlay/s6-rc.d/init-rlog-import/run && \
   chmod u+rwx -R /data && \
   ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
   ln -sf /home/nnlc/nnlc/rlog-import-log.sh /usr/local/bin/rlog-import && \
