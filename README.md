@@ -44,7 +44,8 @@ The container includes all required tools and packages to process rlogs into an 
     - `VEHICLE_NAME_torque_adjusted_eps/*.png`
 6. Exit the container's shell with `exit`
 
-- Note: Only CPU training is currently tested.
+**Notes:**
+- The first run of the model training step will need to precompile a small number of Julia packages based on your host system, which may cause this run to take a few extra minutes. This should generally be a one-time thing, but may be triggered again after updating GPU drivers on the host system.
 
 ### Renaming Existing Rlogs
 In the event you have rlogs copied directly from the comma device with the original directory structure and naming scheme, you can still use these by renaming them to the required format with the included script.
