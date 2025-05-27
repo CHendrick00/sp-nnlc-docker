@@ -1,0 +1,92 @@
+#!/command/with-contenv bash
+
+# Save environment variables to a file readable for cron
+env > /home/nnlc/nnlc.env
+
+if [[ ! -d "/data/config" ]]; then
+  mkdir -p '/data/config'
+fi
+
+# Set up SSH keys if rlog importing is enabled
+if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; then
+  # Check for other required variables
+  if [[ ! -n $COMMA_IP ]] || [[ ! -n $DEVICE_ID ]]; then
+    echo "COMMA_IP and DEVICE_ID must be set to import rlogs. Aborting..."
+    exit 0
+  fi
+  # Create SSH directory
+  if [[ ! -d "/home/nnlc/.ssh/" ]]; then
+    echo "Creating user .ssh directory"
+    mkdir "/home/nnlc/.ssh/"
+  fi
+  # Check if keys are already configured correctly
+  if [[ -f "/data/config/id_ed25519.pub" ]] && [[ -f "/data/config/id_ed25519" ]]; then
+    if [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ $(cmp -s "/data/config/id_ed25519.pub" "/home/nnlc/.ssh/id_ed25519.pub") ]] && [[ $(cmp -s "/data/config/id_ed25519" "/home/nnlc/.ssh/id_ed25519") ]]; then
+      echo "SSH keys found and are synced between .ssh and config directories. Nothing to do."
+    else
+      # Symlink keys under /data/config to .ssh if required (ex. container was recreated)
+      echo "Recreating symlinks from SSH keys under /data/config to .ssh"
+      rm /home/nnlc/.ssh/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub > /dev/null 2>&1
+      ln -s /data/config/id_ed25519 /home/nnlc/.ssh/id_ed25519
+      ln -s /data/config/id_ed25519.pub /home/nnlc/.ssh/id_ed25519.pub
+    fi
+  elif [[ -f "/home/nnlc/.ssh/id_ed25519" ]] && [[ -f "/home/nnlc/.ssh/id_ed25519.pub" ]]; then
+    # use existing keys if available in .ssh (ex. key(s) were deleted from /data/config)
+    echo "SSH keys found in .ssh but not under /data/config. Adding links to SSH keys under /data/config for persistence."
+    rm /data/config/id_ed25519 /data/config/id_ed25519.pub > /dev/null 2>&1
+    ln -s /home/nnlc/.ssh/id_ed25519 /data/config/id_ed25519
+    ln -s /home/nnlc/.ssh/id_ed25519.pub /data/config/id_ed25519.pub
+  else
+    # Generate keys if none exist under /data/config or .ssh
+    echo "No usable SSH key set found. Generating new keys"
+    # ensure all keys are deleted in case only 1 was missing
+    rm /home/nnlc/.ssh/id_ed25519 /data/config/id_ed25519 /home/nnlc/.ssh/id_ed25519.pub /data/config/id_ed25519.pub > /dev/null 2>&1
+    # generate new keys
+    ssh-keygen -t ed25519 -f /home/nnlc/.ssh/id_ed25519 -N ""
+
+    # keys need to be stored to a persistent volume so they aren't regenerated whenever the container is recreated
+    echo "Persisting keys under /data/config"
+    cp /home/nnlc/.ssh/id_ed25519 /data/config/id_ed25519
+    cp /home/nnlc/.ssh/id_ed25519.pub /data/config/id_ed25519.pub
+  fi
+
+  # Add SSH config file entry for comma
+  if [[ ! -f "/home/nnlc/.ssh/config" ]]; then
+    # Add config file if not present
+    echo "Adding SSH config for comma device"
+    touch /home/nnlc/.ssh/config
+    echo -e "Host comma\nUser comma\nHostname $COMMA_IP\nStrictHostKeyChecking accept-new" > /home/nnlc/.ssh/config
+  else
+    if output=$(cat '/home/nnlc/.ssh/config') && [[ $output != *$COMMA_IP* ]]; then
+      # Recreate config file with correct entry if COMMA_IP isn't present or changed values
+      # This will wipe any manual edits to the ssh config file
+      rm /home/nnlc/.ssh/config > /dev/null 2>&1
+      touch /home/nnlc/.ssh/config
+      echo -e "Host comma\nUser comma\nHostname $COMMA_IP\nStrictHostKeyChecking accept-new" > /home/nnlc/.ssh/config
+    else
+      echo "SSH config file already exists with correct IP. Nothing to do."
+    fi
+  fi
+
+  # Add cron job to automatically import logs if enabled
+  if [[ -n $ENABLE_RLOGS_SCHEDULER ]] && [[ $ENABLE_RLOGS_SCHEDULER == 'true' ]]; then
+    # Create directory to log to. Log for last run will be stored under RLOGS_SCHEDULE.txt
+    if [[ ! -d "/data/logs" ]]; then
+      echo "Creating log directory for cronjob output"
+      mkdir "/data/logs"
+    fi
+    # Set up rlog import cronjob
+    if [[ -n $RLOGS_SCHEDULE ]]; then
+      echo "Setting rlog import schedule as: $RLOGS_SCHEDULE"
+      cron_schedule=$RLOGS_SCHEDULE
+    else
+      echo "Using default schedule: 00 0-23/6 * * *"
+      cron_schedule="00 0-23/6 * * *"
+    fi
+    # Set cron schedule
+    # This wipes any custom edits to crontab
+    echo "Setting crontab to enable automated rlog imports"
+    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog-import_scheduled_log.sh") | crontab -
+    service cron start
+  fi
+fi
