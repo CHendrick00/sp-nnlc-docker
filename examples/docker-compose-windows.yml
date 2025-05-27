@@ -1,9 +1,9 @@
 ---
 services:
   nnlc:
-    image: ghcr.io/chendrick00/sp-nnlc-docker:latest
-    # pull_policy: always
-    container_name: sp-nnlc-docker
+    image: ghcr.io/chendrick00/sp-nnlc-docker:master
+    pull_policy: missing
+    container_name: nnlc
     environment:
       - COMMA_IP=xxx.xxx.xxx.xxx
       - DEVICE_ID=DEVICE_ID_HERE
