@@ -1,7 +1,7 @@
 ---
 services:
   nnlc:
-    image: ghcr.io/CHendrick00/sp-nnlc-docker:latest
+    image: ghcr.io/chendrick00/sp-nnlc-docker:latest
     # pull_policy: always
     container_name: sp-nnlc-docker
     environment:
@@ -9,6 +9,7 @@ services:
       - DEVICE_ID=DEVICE_ID_HERE
       - ENABLE_RLOGS_IMPORTER=true
       - ENABLE_RLOGS_SCHEDULER=true
+      - GPU=nvidia
       - RLOGS_SCHEDULE='0 0-23/6 * * *'
       - VEHICLE=vehicle
       - TZ=America/Los_Angeles

@@ -63,28 +63,30 @@ In the event you have rlogs copied directly from the comma device with the origi
 2. From PowerShell, install [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install):</br>`wsl --install`
 3. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with WSL 2 backend.
 4. If using a GPU, follow the instructions in [GPU Support](#gpu-support).
-5. Download the provided docker-compose.yml file.
+5. Download the provided docker-compose-windows.yml file.
 6. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
-7. Create the container (example):</br>`docker compose -f C:\PATH-TO\docker-compose.yml up -d`
+7. Create the container (example):</br>`docker compose -f C:\PATH-TO\docker-compose-windows.yml up -d`
     - This will create the **data** volume accessible from the following path:</br>
   `\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\sp-nnlc-docker_data\_data`
 
 **Notes**: 
 - Docker Exec commands can be run directly in the Docker Desktop GUI if desired: `Containers > sp-nnlc-docker > Exec`
   - `docker exec -it sp-nnlc-docker bash -c` should be removed from supplied commands when running directly in the container.
-- Creating a bind mount from an existing Windows path to the data volume is difficult, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
+- Creating a bind mount from an existing Windows path to the data volume is difficult due to permissions, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
 
 ### Linux - Debian/Ubuntu
 1. Install [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
 2. Follow instructions in [GPU Support](#gpu-support) as required
-3. Download the provided docker-compose.yml file.
+3. Download the provided docker-compose-linux.yml file.
 4. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
-5. Create the container (example):</br>`docker compose -f /PATH-TO/docker-compose.yml up -d`
-    - This will create the **data** volume accessible from the following path - see note below:</br>
-  `/var/lib/docker/volumes/sp-nnlc-docker_data/_data`
+5. Create a mountpoint for the data volume. If using the default path: `sudo mkdir /opt/nnlc`.
+6. Update the data mountpoint's owner to the container user: `sudo chown -R 1234:1234 /opt/nnlc`
+5. Create the container (example):</br>`docker compose -f /PATH-TO/docker-compose-linux.yml up -d`
+    - This will create the **data** volume as a bind mount accessible under `/opt/nnlc` - see note below.
 
 **Notes**: 
-- The data volume is located under /var/lib/docker/volumes/sp-nnlc-docker_data, but parts of the path may only be accessible to the root user and not visible with `ls`. The contents can still be accessed from a rootless user with `cd /var/lib/docker/volumes/sp-nnlc-docker_data/_data`.
+- Bind mounts are easier to permission to work with Docker on Linux, so this is the default on the docker-compose-linux.yml example.
+- You can create the volume as a normal Docker volume if you wish, but be aware that the path is created under the main Docker data directory which is owned by root and is not visible to rootless users without running `chown` on the volume directory. If you choose to use this anyway, you can find the volume under `cd /var/lib/docker/volumes/sp-nnlc-docker_data/_data`.
 - Bind mounts are an alternative to the above, but have not been tested and may require some work to get host permissions on the mount directory correct. `chown -R 1234:1234 /HOST/PATH` may be all that's required, but only try this if you know what you're doing.
 
 ### Others
