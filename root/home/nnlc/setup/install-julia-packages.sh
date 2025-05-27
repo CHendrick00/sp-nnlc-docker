@@ -44,7 +44,8 @@ echo
 # Intel oneAPI	oneAPI
 julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN");'
 julia -e 'using CUDA; CUDA.set_runtime_version!(v"12.8.0");' # Set a default runtime version to prevent errors on first processing run
-# julia -e 'import Pkg; Pkg.add("AMDGPU")'
+julia -e 'using CUDA;' # Force precompile
+julia -e 'using cuDNN;' # Force precompile
 
 bail_on_error
 

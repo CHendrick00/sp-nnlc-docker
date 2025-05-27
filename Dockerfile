@@ -2,7 +2,8 @@ FROM ubuntu:24.04
 
 # set build variables
 ARG DEBIAN_FRONTEND="noninteractive"
-ARG GPU="nvidia"
+
+ENV GPU="nvidia"
 
 # Install stuff
 RUN \

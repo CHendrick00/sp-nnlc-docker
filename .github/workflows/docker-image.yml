@@ -1,16 +1,16 @@
 name: Docker CI
 
 on:
-  push:
-    branches: [ "develop" ]
-    paths:
-      - root/
-      - Dockerfile
-  pull_request:
-    branches: [ "develop" ]
-    paths:
-      - root/
-      - Dockerfile
+  # push:
+  #   branches: [ "develop" ]
+  #   paths:
+  #     - root/
+  #     - Dockerfile
+  # pull_request:
+  #   branches: [ "develop" ]
+  #   paths:
+  #     - root/
+  #     - Dockerfile
   workflow_dispatch:
 
 jobs:
