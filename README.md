@@ -88,7 +88,6 @@ In the event you have rlogs copied directly from the comma device with the origi
 **Notes**: 
 - Bind mounts are easier to permission to work with Docker on Linux, so this is the default on the docker-compose-linux.yml example.
 - You can create the volume as a normal Docker volume if you wish, but be aware that the path is created under the main Docker data directory which is owned by root and is not visible to rootless users without running `chown` on the volume directory. If you choose to use this anyway, you can find the volume under `cd /var/lib/docker/volumes/nnlc_data/_data`.
-- Bind mounts are an alternative to the above, but have not been tested and may require some work to get host permissions on the mount directory correct. `chown -R 1234:1234 /HOST/PATH` may be all that's required, but only try this if you know what you're doing.
 
 ### Others
 - Other host operating systems are untested and may or may not work out-of-box.
@@ -108,7 +107,7 @@ Some packages may need to be installed on the host system in order to use the GP
   1. Untested, but support should already be included with Docker Desktop using WSL 2. See [Docker GPU Support Documentation](https://docs.docker.com/desktop/features/gpu/).
 
 ### Other
-- AMD, Intel, and others are untested and unsupported at this time.
+- AMD, Intel, and others are unsupported at this time.
 
 
 ## Testing Models
@@ -158,16 +157,16 @@ After generating a model, the following steps must be performed to test on your 
 
 
 ## Environment Variables
-| Variable Name          | Description                                                      | Example Value       | Default Value  | Allowed Values                                                        | Required                      | Notes                                                                                                                                       |
-|------------------------|------------------------------------------------------------------|---------------------|----------------|-----------------------------------------------------------------------|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| COMMA_IP               | Local IP of the comma device                                     | 192.168.1.100       | -              | -                                                                     | If ENABLE_RLOGS_IMPORTER=true | Highly recommended to assign the comma a static IP in your router to prevent this value from changing                                       |
-| DEVICE_ID              | Comma device's dongle ID                                         | 3d264cee10fdc8d3    | -              | -                                                                     | Yes                           | Can be found in comma device settings or your Comma Connect account                                                                         |
-| ENABLE_RLOGS_IMPORTER  | Enables importing of rlogs from comma device                     | true                | false          | true, false                                                           | No, but recommended           | Creates the SSH config to the comma device - the container can't be used to upload a model without this enabled                             |
-| ENABLE_RLOGS_SCHEDULER | Enables rlog import script to be automatically run on a schedule | true                | false          | true, false                                                           | No                            | Requires the container to be left running continuously                                                                                      |
-| GPU                    | GPU type                                                         | nvidia              | nvidia         | nvidia, none                                                          | No                            | If not using a GPU, setting this to none prevents needlessly downloading CUDA packages.                                                     |
-| RLOGS_SCHEDULE         | Allows a custom schedule for ENABLE_RLOGS_SCHEDULER              | 0 0 * * *           | 0 0-23/6 * * * | See https://crontab.guru/                                             | No                            | Highly advise against setting the minute (first) value to anything other than 0 to avoid triggering concurrent runs or unexpected behavior. |
-| VEHICLE                | Name of vehicle to use when naming directories                   | ioniq6              | -              | -                                                                     | Yes                           | Does not have to match vehicle name in opendbc. Do NOT include any spaces or special characters in this value.                              |
-| TZ                     | Timezone used by the container                                   | America/Los_Angeles | UTC            | See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List | No, but recommended           | Useful to set with ENABLE_RLOGS_SCHEDULER in order for the scheduled runs to happen at the expected time                                    |
+| Variable Name          | Description                                                      | Example Value       | Default Value  | Allowed Values                                                        | Required                      | Notes                                                                                                                                      |
+|------------------------|------------------------------------------------------------------|---------------------|----------------|-----------------------------------------------------------------------|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| COMMA_IP               | Local IP of the comma device                                     | 192.168.1.100       | -              | -                                                                     | If ENABLE_RLOGS_IMPORTER=true | Highly recommended to assign the comma a static IP in your router to prevent this value from changing                                      |
+| DEVICE_ID              | Comma device's dongle ID                                         | 3d264cee10fdc8d3    | -              | -                                                                     | Yes                           | Can be found in comma device settings or your Comma Connect account.                                                                       |
+| ENABLE_RLOGS_IMPORTER  | Enables importing of rlogs from comma device                     | true                | false          | true, false                                                           | No, but recommended           | Creates the SSH config to the comma device - the container can't be used to upload a model without this enabled                            |
+| ENABLE_RLOGS_SCHEDULER | Enables rlog import script to be automatically run on a schedule | true                | false          | true, false                                                           | No                            | Requires the container to be left running continuously                                                                                     |
+| GPU                    | GPU type                                                         | nvidia              | nvidia         | nvidia, none                                                          | No                            | If not using a GPU, setting this to none prevents running needless CUDA package version checks                                             |
+| RLOGS_SCHEDULE         | Allows a custom schedule for ENABLE_RLOGS_SCHEDULER              | 0 0 * * *           | 0 0-23/6 * * * | See https://crontab.guru/                                             | No                            | Highly advise against setting the minute (first) value to anything other than 0 to avoid triggering concurrent runs or unexpected behavior |
+| VEHICLE                | Name of vehicle to use when naming directories                   | ioniq6              | -              | -                                                                     | Yes                           | Does not have to match vehicle name in opendbc. Do NOT include any spaces or special characters in this value                              |
+| TZ                     | Timezone used by the container                                   | America/Los_Angeles | UTC            | See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List | No, but recommended           | Useful to set with ENABLE_RLOGS_SCHEDULER in order for the scheduled runs to happen at the expected time                                   |
 
 
 ## Data Volume Filetree
@@ -191,6 +190,8 @@ See below for a diagram of the data volume directory structure, where certain fi
 │   │   │   ├── VEHICLE_NAME_steer_cmd/                    (Model generation output)
 │   │   │   │   ├── ... 
 │   │   │   ├── VEHICLE_NAME_torque_adjusted_eps/          (Model generation output - plots and model file)
+│   │   │   │   ├── VEHICLE_NAME_torque_adjusted_eps-a.png (Generated model plot)
+│   │   │   │   ├── VEHICLE_NAME_torque_adjusted_eps-b.png (Generated model plot)
 │   │   │   │   ├── VEHICLE_NAME_torque_adjusted_eps.json  (Model file to be copied to comma)
 │   │   │   ├── *.csv                                      (Processing files - Processing Step 2)
 │   │   │   ├── *.feather                                  (Feather files - Processing Step 2)
