@@ -131,7 +131,7 @@ cd $OP
 if [[ $GPU == 'nvidia' ]]; then
   CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
   CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
-  if [[ $(version $CURRVER) -lt $($CUDAVER) ]]; then
+  if [[ $(version $CURRVER) -lt $(version $CUDAVER) ]]; then
     echo "Setting CUDA runtime version"
     CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
     julia $CUDASTR
