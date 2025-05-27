@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
+function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
+
 if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
   echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."
   exit 1
 fi
-
 
 # Set directory to folder where the project
 # assets like sunnypilot and OP_ML_FF dirs are
@@ -130,7 +131,7 @@ cd $OP
 if [[ $GPU == 'nvidia' ]]; then
   CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
   CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
-  if [[ "$CURRVER" -le "$CUDAVER" ]]; then
+  if [[ $(version $CURRVER) -lt $($CUDAVER) ]]; then
     echo "Setting CUDA runtime version"
     CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
     julia $CUDASTR
