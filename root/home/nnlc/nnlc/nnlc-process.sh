@@ -131,8 +131,11 @@ read INP
 echo "Checking for available GPUs"
 if (command -v nvidia-smi) >/dev/null 2>&1 && (nvidia-smi -q | grep 'Attached GPUs') >/dev/null 2>&1
   echo "Supported NVIDIA GPU found."
+  echo
   nvidia-smi -q | grep 'Attached GPUs'
+  echo 
   nvidia-smi
+  echo
 else 
   echo "NVIDIA GPU (nvidia-smi) not found."
   echo "Training cannot be performed. Aborting..."
