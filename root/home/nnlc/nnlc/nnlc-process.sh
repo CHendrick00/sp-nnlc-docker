@@ -122,14 +122,14 @@ tools/tuning/lat_to_csv_torquennd.py
 bail_on_error
 
 echo
-echo -n "Before proceeding with training, please review [$VEHICLE lat_accel_vs_torque.png] and validate that the data is well-represented across all speed bands and torque levels."
-echo -n "Additionally, pay special attention to the driver torque events in columns 3 and 5, especially at higher speeds. An excessive amount of data in these columns may lead to irregular driving behavior."
-echo -n "For an example of a good [$VEHICLE lat_accel_vs_torque.png] plot, see https://github.com/sunnypilot/sunnypilot/pull/925."
+echo "Before proceeding with training, please review [$VEHICLE lat_accel_vs_torque.png] and validate that the data is well-represented across all speed bands and torque levels."
+echo "Additionally, pay special attention to the driver torque events in columns 3 and 5, especially at higher speeds. An excessive amount of data in these columns may lead to irregular driving behavior."
+echo "For an example of a good [$VEHICLE lat_accel_vs_torque.png] plot, see https://github.com/sunnypilot/sunnypilot/pull/925."
 echo -n "After reviewing, press Enter to continue with training, or Ctrl-C to exit: "
 read INP
 
 echo "Checking for available GPUs"
-if (command -v nvidia-smi) >/dev/null 2>&1 && (nvidia-smi -q | grep 'Attached GPUs') >/dev/null 2>&1
+if (command -v nvidia-smi) >/dev/null 2>&1 && (nvidia-smi -q | grep 'Attached GPUs') >/dev/null 2>&1; then
   echo "Supported NVIDIA GPU found."
   echo
   nvidia-smi -q | grep 'Attached GPUs'
