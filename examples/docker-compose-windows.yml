@@ -9,7 +9,7 @@ services:
       - DEVICE_ID=DEVICE_ID_HERE
       - ENABLE_RLOGS_IMPORTER=true
       - ENABLE_RLOGS_SCHEDULER=true
-      - RLOGS_SCHEDULE='0 0-23/6 * * *'
+      - RLOGS_SCHEDULE=0 0-23/6 * * *
       - VEHICLE=vehicle
       - TZ=America/Los_Angeles
     deploy:
