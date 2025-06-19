@@ -129,8 +129,9 @@ echo -n "After reviewing, press Enter to continue with training, or Ctrl-C to ex
 read INP
 
 echo "Checking for available GPUs"
-if (nvidia-smi -q | grep 'Attached GPUs') &> /dev/null; then 
+if (command -v nvidia-smi) >/dev/null 2>&1 && (nvidia-smi -q | grep 'Attached GPUs') >/dev/null 2>&1
   echo "Supported NVIDIA GPU found."
+  nvidia-smi -q | grep 'Attached GPUs'
   nvidia-smi
 else 
   echo "NVIDIA GPU (nvidia-smi) not found."
