@@ -122,22 +122,37 @@ tools/tuning/lat_to_csv_torquennd.py
 bail_on_error
 
 echo
-echo -n "Press Enter to continue with training, or Ctrl-C to exit: "
+echo -n "Before proceeding with training, please review [$VEHICLE lat_accel_vs_torque.png] and validate that the data is well-represented across all speed bands and torque levels."
+echo -n "Additionally, pay special attention to the driver torque events in columns 3 and 5, especially at higher speeds. An excessive amount of data in these columns may lead to irregular driving behavior."
+echo -n "For an example of a good [$VEHICLE lat_accel_vs_torque.png] plot, see https://github.com/sunnypilot/sunnypilot/pull/925."
+echo -n "After reviewing, press Enter to continue with training, or Ctrl-C to exit: "
 read INP
+
+echo "Checking for available GPUs"
+if (command -v nvidia-smi) >/dev/null 2>&1 && (nvidia-smi -q | grep 'Attached GPUs') >/dev/null 2>&1
+  echo "Supported NVIDIA GPU found."
+  echo
+  nvidia-smi -q | grep 'Attached GPUs'
+  echo 
+  nvidia-smi
+  echo
+else 
+  echo "NVIDIA GPU (nvidia-smi) not found."
+  echo "Training cannot be performed. Aborting..."
+  exit 1
+fi
 
 echo
 cd $OP
 # Set CUDA runtime version if not latest supported by driver
-if [[ $GPU == 'nvidia' ]]; then
-  CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
-  CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
-  if [[ $(version $CURRVER) -lt $(version $CUDAVER) ]]; then
-    echo "Setting CUDA runtime version"
-    CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
-    julia $CUDASTR
-    echo "Updated CUDA runtime version:"
-    echo $(julia -e 'using CUDA;print(CUDA.runtime_version())')
-  fi
+CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
+CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
+if [[ $(version $CURRVER) -lt $(version $CUDAVER) ]]; then
+  echo "Setting CUDA runtime version"
+  CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
+  julia $CUDASTR
+  echo "Updated CUDA runtime version:"
+  echo $(julia -e 'using CUDA;print(CUDA.runtime_version())')
 fi
 julia $PROCDIR/OP_ML_FF/latmodel_temporal.jl
 bail_on_error
