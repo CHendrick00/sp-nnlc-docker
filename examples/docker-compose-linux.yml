@@ -9,11 +9,9 @@ services:
       - DEVICE_ID=DEVICE_ID_HERE
       - ENABLE_RLOGS_IMPORTER=true
       - ENABLE_RLOGS_SCHEDULER=true
-      - GPU=nvidia
       - RLOGS_SCHEDULE='0 0-23/6 * * *'
       - VEHICLE=vehicle
       - TZ=America/Los_Angeles
-    # Comment deploy section if not using Nvidia GPU - see https://docs.docker.com/compose/how-tos/gpu-support/
     deploy:
       resources:
         reservations:

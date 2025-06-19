@@ -37,8 +37,8 @@ The container includes all required tools and packages to process rlogs into an 
 3. After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
     - `plots_torque/*.png`
     - `$VEHICLE lat_accel_vs_torque.png`
-4. During the model generation step, make sure you see the expected device being used in the output:
-`using device: cpu` or `using device: gpu`
+4. During the model generation step, make sure you see the expected device being used in the output: `using device: gpu`
+    - If you see `using device: cpu`, abort the training as the resulting model will not work correctly. A check is in place to prevent this in most situations, however all edge cases may not be tested.
 5. After model generation completes, review the following outputs:
     - `VEHICLE_NAME_torque_adjusted_eps.json` - NNLC model file
     - `VEHICLE_NAME_torque_adjusted_eps/*.png`
@@ -63,7 +63,7 @@ In the event you have rlogs copied directly from the comma device with the origi
 1. Enable virtualization in BIOS. Refer to your motherboard's documentation for where this setting is located. Typically this is named 'VT-x' or 'SVM' and located under CPU Configuration or similar.
 2. From PowerShell, install [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install):</br>`wsl --install`
 3. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with WSL 2 backend.
-4. If using a GPU, follow the instructions in [GPU Support](#gpu-support).
+4. Follow the instructions in [GPU Support](#gpu-support).
 5. Download the provided docker-compose-windows.yml file.
 6. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
 7. Create the container (example):</br>`docker compose -f C:\PATH-TO\docker-compose-windows.yml up -d`
@@ -76,8 +76,8 @@ In the event you have rlogs copied directly from the comma device with the origi
 - Creating a bind mount from an existing Windows path to the data volume is difficult due to permissions, so the provided docker compose file creates a volume in the WSL filesystem. You can still view and operate on these files as normal with File Explorer using the path provided above.
 
 ### Linux - Debian/Ubuntu
-1. Install [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-2. Follow instructions in [GPU Support](#gpu-support) as required
+1. Install [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository).
+2. Follow the instructions in [GPU Support](#gpu-support).
 3. Download the provided docker-compose-linux.yml file.
 4. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
 5. Create a mountpoint for the data volume. If using the default path: `sudo mkdir /opt/nnlc`.
@@ -102,12 +102,12 @@ Some packages may need to be installed on the host system in order to use the GP
   1. Install [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
   2. Restart the docker daemon with `sudo systemctl restart docker`
 
-
 - **Windows**
   1. Untested, but support should already be included with Docker Desktop using WSL 2. See [Docker GPU Support Documentation](https://docs.docker.com/desktop/features/gpu/).
 
 ### Other
-- AMD, Intel, and others are unsupported at this time.
+- Other GPU types are not currently supported by the training scripts due to CUDA requirement.
+- CPU training is not supported as this functionality is not working correctly in the training scripts and results in a broken model.
 
 
 ## Testing Models
@@ -163,7 +163,6 @@ After generating a model, the following steps must be performed to test on your 
 | DEVICE_ID              | Comma device's dongle ID                                         | 3d264cee10fdc8d3    | -              | -                                                                     | Yes                           | Can be found in comma device settings or your Comma Connect account.                                                                       |
 | ENABLE_RLOGS_IMPORTER  | Enables importing of rlogs from comma device                     | true                | false          | true, false                                                           | No, but recommended           | Creates the SSH config to the comma device - the container can't be used to upload a model without this enabled                            |
 | ENABLE_RLOGS_SCHEDULER | Enables rlog import script to be automatically run on a schedule | true                | false          | true, false                                                           | No                            | Requires the container to be left running continuously                                                                                     |
-| GPU                    | GPU type                                                         | nvidia              | nvidia         | nvidia, none                                                          | No                            | If not using a GPU, setting this to none prevents running needless CUDA package version checks                                             |
 | RLOGS_SCHEDULE         | Allows a custom schedule for ENABLE_RLOGS_SCHEDULER              | 0 0 * * *           | 0 0-23/6 * * * | See https://crontab.guru/                                             | No                            | Highly advise against setting the minute (first) value to anything other than 0 to avoid triggering concurrent runs or unexpected behavior |
 | VEHICLE                | Name of vehicle to use when naming directories                   | ioniq6              | -              | -                                                                     | Yes                           | Does not have to match vehicle name in opendbc. Do NOT include any spaces or special characters in this value                              |
 | TZ                     | Timezone used by the container                                   | America/Los_Angeles | UTC            | See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List | No, but recommended           | Useful to set with ENABLE_RLOGS_SCHEDULER in order for the scheduled runs to happen at the expected time                                   |
@@ -217,8 +216,7 @@ The following logs are stored under `/data/logs` for basic debugging purposes. T
 
 ### Notable Untested Functionality
 The following may or may not work out-of-box. These items have not been tested and as such may not exactly match the documentation or could require additional work.
-- Angle steering vehicles
-- Other hosts: MacOS or non-Ubuntu Linux
+- Other hosts: MacOS, non-Ubuntu Linux distros
 - Nvidia GPU on Windows host
 
 

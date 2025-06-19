@@ -128,19 +128,27 @@ echo -n "For an example of a good [$VEHICLE lat_accel_vs_torque.png] plot, see h
 echo -n "After reviewing, press Enter to continue with training, or Ctrl-C to exit: "
 read INP
 
+echo "Checking for available GPUs"
+if (nvidia-smi -q | grep 'Attached GPUs') &> /dev/null; then 
+  echo "Supported NVIDIA GPU found."
+  nvidia-smi
+else 
+  echo "NVIDIA GPU (nvidia-smi) not found."
+  echo "Training cannot be performed. Aborting..."
+  exit 1
+fi
+
 echo
 cd $OP
 # Set CUDA runtime version if not latest supported by driver
-if [[ $GPU == 'nvidia' ]]; then
-  CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
-  CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
-  if [[ $(version $CURRVER) -lt $(version $CUDAVER) ]]; then
-    echo "Setting CUDA runtime version"
-    CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
-    julia $CUDASTR
-    echo "Updated CUDA runtime version:"
-    echo $(julia -e 'using CUDA;print(CUDA.runtime_version())')
-  fi
+CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
+CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
+if [[ $(version $CURRVER) -lt $(version $CUDAVER) ]]; then
+  echo "Setting CUDA runtime version"
+  CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
+  julia $CUDASTR
+  echo "Updated CUDA runtime version:"
+  echo $(julia -e 'using CUDA;print(CUDA.runtime_version())')
 fi
 julia $PROCDIR/OP_ML_FF/latmodel_temporal.jl
 bail_on_error

@@ -3,8 +3,6 @@ FROM ubuntu:24.04
 # set build variables
 ARG DEBIAN_FRONTEND="noninteractive"
 
-ENV GPU="nvidia"
-
 # Install stuff
 RUN \
   echo "**** run installation script ****" && \
