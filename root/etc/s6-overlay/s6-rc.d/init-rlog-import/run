@@ -86,7 +86,7 @@ if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; th
     # Set cron schedule
     # This wipes any custom edits to crontab
     echo "Setting crontab to enable automated rlog imports"
-    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog-import_scheduled_log.sh") | crontab -
+    (crontab -u nnlc -l 2>/dev/null; echo "$cron_schedule /home/nnlc/nnlc/rlog-import-scheduled-log.sh") | crontab -
     service cron start
   fi
 fi
