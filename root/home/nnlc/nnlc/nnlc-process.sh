@@ -36,6 +36,7 @@ fi
 # Output path - note this is hard-coded as ~/Downloads in processing step 2
 # and training steps.  To change this, edit the processing and training scripts.
 OP=/data/output/$VEHICLE
+RVW=$OP/review
 
 # bail on nonzero RC function
 bail_on_error() {
@@ -88,15 +89,21 @@ bail_on_error
 
 cd $PROCDIR/sunnypilot
 # Update hardcoded paths on processing and training scripts
+## Updating from original
 sed -i "s:home, 'Downloads':'/$OP':g" tools/tuning/lat.py > /dev/null 2>&1
-
 sed -i "s:~/Downloads:$OP:g" tools/tuning/lat_plot.py > /dev/null 2>&1
-
 sed -i "s:os.path.join(os.path.expanduser('~'), 'Downloads/rlogs/output/'):'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s: and has_upper_word(dir_name)::g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s:\"GENESIS\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
-
 sed -i "s:\$home_dir/Downloads/rlogs/output/GENESIS:/$OP:g" $PROCDIR/OP_ML_FF/latmodel_temporal.jl > /dev/null 2>&1
+
+## Updating from after running nnlc-review
+sed -i "s:$RVW:$OP:g" tools/tuning/lat.py > /dev/null 2>&1
+sed -i "s:$$RVW/plots:$OP/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:$$RVW':$OP':g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:'/data/output/$VEHICLE/':'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:\"review\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+
 
 # Begin processing
 sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
