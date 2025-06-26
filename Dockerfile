@@ -64,9 +64,11 @@ RUN chmod u+s $(which cron) && \
   chown -R nnlc:nnlc /etc/s6-overlay/s6-rc.d/init-rlog-import && \
   chmod u+x /etc/s6-overlay/s6-rc.d/init-rlog-import/run && \
   chmod u+rwx -R /data && \
+  ln -sf /home/nnlc/nnlc/nnlc-clean-log.sh /usr/local/bin/nnlc-clean && \
   ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
+  ln -sf /home/nnlc/nnlc/nnlc-review-log.sh /usr/local/bin/nnlc-review && \
   ln -sf /home/nnlc/nnlc/rlog-import-log.sh /usr/local/bin/rlog-import && \
-  ln -sf /home/nnlc/nnlc/rlog-rename.sh /usr/local/bin/rlog-rename
+  ln -sf /home/nnlc/nnlc/rlog-rename-log.sh /usr/local/bin/rlog-rename
 
 # Container initialization
 USER nnlc
