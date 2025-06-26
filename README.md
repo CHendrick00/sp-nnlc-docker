@@ -1,10 +1,12 @@
 # sp-nnlc-docker
 
+
 ## Quickstart Guide
 1. Follow the [installation instructions](#installation) for your host OS to install docker and create the nnlc docker container.
 2. Import rlogs by running `rlog-import` on the container OR copy existing rlogs with the correct naming scheme to `/data/rlogs` OR copy the comma's `/data/media/0/realdata` directory to `/data/rlogs` and run `rlog-rename` on the container.
 3. Generate the model by running `nnlc-process` on the container.
 4. Follow the instructions in [Testing Models](#testing-models) to upload your generated model to your comma device for testing.
+
 
 ## Features and Usage
 
@@ -34,7 +36,7 @@ The container includes all required tools and packages to process rlogs into an 
 1. Ensure rlog.zst files are present under `/data/rlogs/$VEHICLE/$DEVICE_ID` and named according to the required format: `[DEVICE_ID]_[ROUTE]--rlog.zst`
 2. Run the rlog processing and model generation script using docker exec:</br>
   `docker exec -it nnlc bash -c nnlc-process`
-3. After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated graphs to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
+3. After processing steps 1 and 2 have completed, you will be presented with a prompt before proceeding with model generation. Before continuing, it's a good idea to view the generated plots under `/data/output/$VEHICLE` to determine if enough data points are present and all speeds and lateral acceleration bands are well-represented.
     - `plots_torque/*.png`
     - `$VEHICLE lat_accel_vs_torque.png`
 4. During the model generation step, make sure you see the expected device being used in the output: `using device: gpu`
@@ -46,6 +48,7 @@ The container includes all required tools and packages to process rlogs into an 
 
 **Notes:**
 - The first run of the model training step will need to precompile a small number of Julia packages based on your host system, which may cause this run to take a few extra minutes. This should generally be a one-time thing, but may be triggered again after updating GPU drivers on the host system.
+- If the `$VEHICLE lat_accel_vs_torque.png` plot data in the driver columns appears overly noisy or has an abnormally large ratio of events compared to the LKA column, it may be a good idea to try using [nnlc-review](#reviewing-individual-route-rlogs) to see if certain especially noisy logs should be excluded.
 
 ### Renaming Existing Rlogs
 In the event you have rlogs copied directly from the comma device with the original directory structure and naming scheme, you can still use these by renaming them to the required format with the included script.
@@ -56,6 +59,36 @@ In the event you have rlogs copied directly from the comma device with the origi
   `docker exec -t nnlc bash -c rlog-rename`
 3. See the renamed files under `/data/rlogs/$VEHICLE/$DEVICE_ID`
 4. Optional. Delete the files under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
+
+### Reviewing Individual Route Rlogs
+When working with noisy data, it can be helpful to have a more granular way to review and filter what logs you want to include or exclude when generating a model. This feature allows for processing of rlogs per individual route, outputting the plots_torque/ directory and lat_accel_vs_torque plots for each route for manual review.
+
+**Instructions**
+1. Ensure rlog.zst files are present under `/data/rlogs/$VEHICLE/$DEVICE_ID` and named according to the required format: `[DEVICE_ID]_[ROUTE]--rlog.zst`
+2. Run the rlog processing and model generation script using docker exec:</br>
+  `docker exec -t nnlc bash -c nnlc-review`
+3. After all routes have finished processing, you can find the following plots for each route prefixed with the device ID and route name under `data/output/$VEHICLE/review` as below:
+    - `[DEVICE_ID]_[ROUTE_NAME]-plots_torque/*.png`
+    - `[DEVICE_ID]_[ROUTE_NAME]-lat_accel_vs_torque.png`
+
+**Notes:**
+- When reviewing individual route outputs, the strongest indicator of rlog quality is the number of Driver torque events (column 3) listed the lat_accel_vs_torque plot, the ratio of Driver events to LKA events (column 2), and the overall shape and distribution of the Driver events. Routes with a large ratio of driver to LKA events or a noisy pattern of driver events should be removed from the pool to reduce the amount of low quality data going into the model.
+
+### Post-Processing Cleanup
+When changing the pool of rlogs under `/data/rlogs`, you would normally also need to remember to clean up the rlogs and lat files present in the processing and review directories. `nnlc-clean` simplifies this by allowing for quick cleanup of the output directory.
+
+**Instructions**
+1. Run the processing and review cleanup script using docker exec:</br>
+  `docker exec -it nnlc bash -c nnlc-clean`
+2. You will be presented with a list of files that would be deleted followed by a (y/n) prompt for each of these options:
+    - `nnlc-process` lat files & processing and training outputs
+    - `nnlc-process` rlogs copied to the processing directory
+    - `nnlc-review` lat files & processing outputs
+    - `nnlc-review` rlogs copied to the review processing directory
+
+**Notes:**
+- There is intentionally no option to clean logs from the rlog download directory, as permanently deleting your entire `rlog-import` archive would rarely be desired and as such should be a deliberate action.
+
 
 ## Installation
 
@@ -97,7 +130,6 @@ In the event you have rlogs copied directly from the comma device with the origi
 Some packages may need to be installed on the host system in order to use the GPU for model processing inside the container. First, ensure you have updated drivers for your GPU installed on the host. Afterwards, see below:
 
 ### NVIDIA
-
 - **Linux**
   1. Install [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
   2. Restart the docker daemon with `sudo systemctl restart docker`
@@ -183,6 +215,7 @@ See below for a diagram of the data volume directory structure, where certain fi
 │   │   ├── $VEHICLE/
 │   │   │   ├── plots_torque/                              (Fit data plots - Processing Step 1)
 │   │   │   ├── plots_torque-/                             (Fit data plots from previous run)
+│   │   │   ├── review/                                    (Contains processing outputs of nnlc-review)
 │   │   │   ├── rlogs/
 │   │   │   │   ├── $DEVICE_ID/
 │   │   │   │   │   ├── *.zst                              (Rlogs copied from /data/rlogs for processing)
@@ -204,7 +237,6 @@ See below for a diagram of the data volume directory structure, where certain fi
 
 
 ## Misc
-
 ### Logging
 The following logs are stored under `/data/logs` for basic debugging purposes. These are overwritten each time the associated script is run to prevent unintentional accumulation, and as such only include the log for the latest run.
 - nnlc-process_log.txt
