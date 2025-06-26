@@ -99,8 +99,8 @@ sed -i "s:\$home_dir/Downloads/rlogs/output/GENESIS:/$OP:g" $PROCDIR/OP_ML_FF/la
 
 ## Updating from after running nnlc-review
 sed -i "s:$RVW:$OP:g" tools/tuning/lat.py > /dev/null 2>&1
-sed -i "s:$$RVW/plots:$OP/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
-sed -i "s:$$RVW':$OP':g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:$RVW/plots:$OP/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:$RVW/':$OP/':g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:'/data/output/$VEHICLE/':'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s:\"review\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 

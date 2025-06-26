@@ -103,7 +103,7 @@ sed -i "s:\"GENESIS\":\"review\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/
 ## Updating from after running nnlc-process
 sed -i "s:$OP:$RVW:g" tools/tuning/lat.py > /dev/null 2>&1
 sed -i "s:$OP/plots:$RVW/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
-sed -i "s:$OP':$RVW':g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:$OP/':$RVW/':g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:'/data/output/':'/data/output/$VEHICLE/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s:\"$VEHICLE\":\"review\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 
@@ -116,8 +116,7 @@ done |
 sort |
 uniq > "$RVW/routes.txt"
 
-rm $RLOGS_ROUTE/*.zst
-rm $RVW/*.lat
+rm -r $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt $RVW/plots $RVW/plots_torque 2>&1
 
 while IFS= read -r line; do
   cd $PROCDIR/sunnypilot
@@ -152,7 +151,7 @@ while IFS= read -r line; do
   ROUTE_NAME="${line/|/_}"
   mv "$RVW/review lat_accel_vs_torque.png" "$RVW/$ROUTE_NAME-lat_accel_vs_torque.png"
   mv $RVW/plots_torque $RVW/$ROUTE_NAME-plots_torque
-  rm $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt
+  rm $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt 2>&1
 
 done < "$RVW/routes.txt"
 
