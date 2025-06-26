@@ -93,7 +93,6 @@ fi
 
 cd $PROCDIR/sunnypilot
 # Update hardcoded paths on processing and training scripts
-
 ## Updating from original
 sed -i "s:home, 'Downloads':'/$RVW':g" tools/tuning/lat.py > /dev/null 2>&1
 sed -i "s:~/Downloads:$RVW:g" tools/tuning/lat_plot.py > /dev/null 2>&1
@@ -106,6 +105,7 @@ sed -i "s:$OP:$RVW:g" tools/tuning/lat.py > /dev/null 2>&1
 sed -i "s:$OP/plots:$RVW/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:$OP':$RVW':g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:'/data/output/':'/data/output/$VEHICLE/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:\"$VEHICLE\":\"review\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 
 # Generate list of routes
 cd $RLOGS
@@ -149,9 +149,10 @@ while IFS= read -r line; do
     echo "No valid .lat files generated from route: $line"
   fi
 
-  mv "$RVW/review lat_accel_vs_torque.png" "$RVW/$line-lat_accel_vs_torque.png"
-  rm $RLOGS_ROUTE/*.zst
-  rm $RVW/*.LAT
+  ROUTE_NAME="${line/|/_}"
+  mv "$RVW/review lat_accel_vs_torque.png" "$RVW/$ROUTE_NAME-lat_accel_vs_torque.png"
+  mv $RVW/plots_torque $RVW/$ROUTE_NAME-plots_torque
+  rm $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt
 
 done < "$RVW/routes.txt"
 
