@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# project - directory and conda environment name (default)
-NNLC=nnlc
-
 # bail on nonzero RC function
 bail_on_error() {
   RC=$?
@@ -14,24 +11,18 @@ bail_on_error() {
   fi
 }
 
-echo
-echo "*** This script installs all the prerequisites to run NNLC training"
-echo "    on an Ubuntu Linux 24.04 system.  It is intended to only be run once."
-
 # directory path for project assets
-NNLCD=/home/nnlc/$NNLC
-
-# Remaining steps are under project directory
-cd $NNLCD/OP_ML_FF
+cd /home/nnlc/nnlc
 
 echo
 echo "*** Installing Julia package requirements for training, as needed"
 echo "    NOTE: takes a while and writes about 5.6 GB to /home/nnlc/.julia"
 echo
-head -35 latmodel_temporal.jl | sed 's/# //' > deps.jl
+wget -O julia_packages.jl https://raw.githubusercontent.com/mmmorks/OP_ML_FF/0116b9e3f0cfb49290936604b6b2f63325414bbc/latmodel_temporal.jl
+head -36 julia_packages.jl | sed 's/# //' > deps.jl
 julia deps.jl
 bail_on_error
-rm -f deps.jl
+rm -f julia_packages.txt deps.jl
 
 echo
 echo "*** Installing Julia GPU support"
@@ -42,10 +33,17 @@ echo
 # AMD		AMDGPU
 # Apple Metal	Metal
 # Intel oneAPI	oneAPI
+
+# CUDA
 julia -e 'import Pkg; Pkg.add("CUDA"); Pkg.add("cuDNN");'
 julia -e 'using CUDA; CUDA.set_runtime_version!(v"12.8.0");' # Set a default runtime version to prevent errors on first processing run
 julia -e 'using CUDA;' # Force precompile
 julia -e 'using cuDNN;' # Force precompile
+
+# Apple Metal
+## TODO
+
+# AMD, Intel not supported by tools at this time
 
 bail_on_error
 
