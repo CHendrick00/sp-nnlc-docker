@@ -116,7 +116,7 @@ done |
 sort |
 uniq > "$RVW/routes.txt"
 
-rm -r $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt $RVW/plots $RVW/plots_torque 2>&1
+rm -r $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt $RVW/plots $RVW/plots_torque > /dev/null 2>&1
 
 while IFS= read -r line; do
   cd $PROCDIR/sunnypilot
@@ -150,8 +150,9 @@ while IFS= read -r line; do
 
   ROUTE_NAME="${line/|/_}"
   mv "$RVW/review lat_accel_vs_torque.png" "$RVW/$ROUTE_NAME-lat_accel_vs_torque.png"
+  rm $RVW/$ROUTE_NAME-plots_torque > /dev/null 2>&1
   mv $RVW/plots_torque $RVW/$ROUTE_NAME-plots_torque
-  rm $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt 2>&1
+  rm $RLOGS_ROUTE/*.zst $RVW/*.lat $RVW/*.csv $RVW/*.feather $RVW/latfiles.txt > /dev/null 2>&1
 
 done < "$RVW/routes.txt"
 
