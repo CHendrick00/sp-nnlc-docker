@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 
-OP=/data/output/$VEHICLE
-OP_BACKUP=/data/backups/nnlc-process
-RLD=/data/output/$VEHICLE/rlogs
+process_backup_dir=/data/backups/nnlc-process
+process_dir=/data/output/$VEHICLE
+process_rlog_dir=/data/output/$VEHICLE/rlogs
 
-if [ ! -d $OP_BACKUP ]; then
-  mkdir -p $OP_BACKUP
+if [ ! -d $process_backup_dir ]; then
+  mkdir -p $process_backup_dir
 fi
 
 # nnlc-process processing outputs
-if [ -d $OP ]; then
-  cd $OP
+if [ -d $process_dir ]; then
+  cd $process_dir
   echo
-  OUTFILES=$(find . -depth '(' -name "*.csv" -o -name "*.feather" -o -name "*.png" -o -wholename "plots_torque/*" -o -wholename "*steer_cmd/*" -o -wholename "*torque_adjusted_eps/*" ')' -not -path "./review/*" -not -path "./plots_torque-/*"  | sort)
-  LATFILES=$(find . -depth '(' -name "*.lat" ')' -not -path "./review/*" | sort)
-  FILES="$LATFILES"$'\n'"$OUTFILES" # force latfiles to top of list
-  if [[ -n $FILES ]]; then
+  process_files=$(find . -depth '(' -name "*.csv" -o -name "*.feather" -o -name "*.png" -o -wholename "plots_torque/*" -o -wholename "*steer_cmd/*" -o -wholename "*torque_adjusted_eps/*" ')' -not -path "./review/*" -not -path "./plots_torque-/*"  | sort)
+  lat_files=$(find . -depth '(' -name "*.lat" ')' -not -path "./review/*" | sort)
+  files="$lat_files"$'\n'"$process_files" # force latfiles to top of list
+  if [[ -n $files ]]; then
     echo "NNLC-PROCESS OUTPUTS"
     echo "---------------------------"
-    echo "$FILES"
+    echo "$files"
     echo
-    cd $OP_BACKUP
+    cd $process_backup_dir
     while true; do
       read -p "Enter a custom backup name, or press Enter for default with timestamp: " INP
       if [[ -n $INP ]]; then
@@ -29,63 +29,63 @@ if [ -d $OP ]; then
           echo
           continue
         fi
-        FILENAME="$INP.tar.gz"
-        echo "Using filename: $FILENAME"
+        filename="$INP.tar.gz"
+        echo "Using filename: $filename"
       else
-        TIMESTAMP=$(date -u "+%Y%m%dT%H%M%SZ")
-        FILENAME="nnlc-process_${VEHICLE}_${TIMESTAMP}.tar.gz"
-        echo "Using default name: $FILENAME"
+        timestamp=$(date -u "+%Y%m%dT%H%M%SZ")
+        filename="nnlc-process_${VEHICLE}_${timestamp}.tar.gz"
+        echo "Using default name: $filename"
       fi
 
-      EXISTING_FILE=$(find . -name "$FILENAME")
-      if [[ -n $EXISTING_FILE ]]; then
+      existing_backup_file=$(find . -name "$filename")
+      if [[ -n $existing_backup_file ]]; then
         read -p "A file with a matching name already exists. Overwrite? (y to overwrite, or Enter to choose a different name): " INP1
         if [[ $INP1 == 'y' ]]; then
-          rm -f $OP_BACKUP/$FILENAME
+          rm -f $process_backup_dir/$filename
         else
           echo
           continue
         fi
       fi
 
-      cd $OP
+      cd $process_dir
       echo
       echo "Saving list of latfiles to latfiles_backup.txt"
-      echo $(find . '(' -name "*.lat" -o -name "*.LAT" ')' | sort) > "$OP/latfiles_backup.txt"
+      echo $(find . '(' -name "*.lat" -o -name "*.LAT" ')' | sort) > "$process_dir/latfiles_backup.txt"
       echo
 
-      cd $RLD
+      cd $process_rlog_dir
       echo "Saving list of rlogs to rlogs_backup.txt"
-      echo $(find . '(' -name "*.zst" -o -name "*.ZST" ')' | sort) > "$OP/rlogs_backup.txt"
+      echo $(find . '(' -name "*.zst" -o -name "*.ZST" ')' | sort) > "$process_dir/rlogs_backup.txt"
       echo
 
-      cd $OP
+      cd $process_dir
       read -p "Exclude .lat files? This results in a much smaller backup size, however you will not be able to recover the inputs for future processing. (y to exclude, or Enter to include): " INP1
       if [[ $INP1 == 'y' ]]; then
         echo
         echo "Creating backup"
         echo "---------------------------"
-        tar -czvf $OP_BACKUP/$FILENAME *.csv *.feather *.png plots_torque *steer_cmd *torque_adjusted_eps
+        tar -czvf $process_backup_dir/$filename *.csv *.feather *.png plots_torque *steer_cmd *torque_adjusted_eps
         echo
-        echo "Backup saved to $OP_BACKUP/$FILENAME"
+        echo "Backup saved to $process_backup_dir/$filename"
       else
         echo
         echo "Creating backup"
         echo "---------------------------"
-        tar -czvf $OP_BACKUP/$FILENAME *.csv *.feather *.png plots_torque *steer_cmd *torque_adjusted_eps *.lat
+        tar -czvf $process_backup_dir/$filename *.csv *.feather *.png plots_torque *steer_cmd *torque_adjusted_eps *.lat
         echo
-        echo "Backup saved to $OP_BACKUP/$FILENAME"
+        echo "Backup saved to $process_backup_dir/$filename"
       fi
-      rm -f "$OP/latfiles_backup.txt" "$OP/rlogs_backup.txt"
+      rm -f "$process_dir/latfiles_backup.txt" "$process_dir/rlogs_backup.txt"
       break
     done
   else
     echo
-    echo "[$OP] doesn't contain any processing outputs. Nothing to do."
+    echo "[$process_dir] doesn't contain any processing outputs. Nothing to do."
   fi
 else
   echo
-  echo "[$OP] doesn't exist. Nothing to do."
+  echo "[$process_dir] doesn't exist. Nothing to do."
 fi
 
 

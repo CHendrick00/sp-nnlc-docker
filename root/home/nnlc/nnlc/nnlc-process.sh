@@ -2,42 +2,6 @@
 
 function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
 
-if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
-  echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."
-  exit 1
-fi
-
-# Set directory to folder where the project
-# assets like sunnypilot and OP_ML_FF dirs are
-cd /home/nnlc/nnlc
-
-# activate nnlc env
-. /home/nnlc/.bashrc
-conda activate nnlc
-
-# dir containing nnlc tools
-PROCDIR=/home/nnlc/nnlc
-
-# dir containing rlogs downloaded from Comma device using included rlog import script - will copy rlog.zst files to $RLOGS
-RD=/data/rlogs/$VEHICLE/$DEVICE_ID
-
-# rlogs processing dir - input path to preprocessing
-RLD=/data/output/$VEHICLE/rlogs
-RLOGS=$RLD/$DEVICE_ID
-
-# Create processing directories if they don't exist
-if [[ ! -d $RLD ]]; then
-  mkdir -p $RLD
-fi
-if [[ ! -d $RLOGS ]]; then
-  mkdir -p $RLOGS
-fi
-
-# Output path - note this is hard-coded as ~/Downloads in processing step 2
-# and training steps.  To change this, edit the processing and training scripts.
-OP=/data/output/$VEHICLE
-RVW=$OP/review
-
 # bail on nonzero RC function
 bail_on_error() {
   RC=$?
@@ -49,68 +13,70 @@ bail_on_error() {
   fi
 }
 
-if [ ! -d sunnypilot -o ! -d OP_ML_FF ]; then
-  echo
-  echo "*** Before using this script, make sure you're cd-ed into a"
-  echo "    prepared NNLC training project directory."
-  echo
+if [[ ! -n $VEHICLE ]]; then
+  echo "Required environment variable VEHICLE not set. Cannot continue."
   exit 1
 fi
 
-echo
-echo "Copying/updating rlog.zst files from $RD to $RLOGS..."
-echo
-cd $RD
-ls -1f *.zst | while read SD; do
-  NF="${SD/_/|}"
-  RLF="$RLOGS/$NF"
-  if [ ! -s $RLF ]; then
-    cp -v $SD $RLF
-    bail_on_error
-  fi
-done
+# Set directory to folder where the project
+# assets like sunnypilot and OP_ML_FF dirs are
+cd /home/nnlc/nnlc
 
-echo
-echo "Preprocessing rlogs in $RLOGS..."
-echo
+# activate nnlc env
+. /home/nnlc/.bashrc
+conda activate nnlc
 
-if [ ! -d $OP ]; then
-  mkdir -p $OP
+# set variables for required operating directories
+tools_dir=/home/nnlc/nnlc
+process_dir=/data/output/$VEHICLE
+review_dir=/data/review/$VEHICLE
+rlog_source_dir=/data/rlogs/$VEHICLE
+rlog_process_dir=$process_dir/rlogs
+
+# Create directories if they don't exist
+if [ ! -d $rlog_process_dir ]; then
+  mkdir -p $rlog_process_dir
   bail_on_error
 fi
 
+echo
+echo "Copying/updating rlog.zst files from $rlog_source_dir to $rlog_process_dir..."
+echo
+rsync --mkpath -avh --prune-empty-dirs --info=progress2 --include '*rlog.zst' $rlog_source_dir/ $rlog_process_dir
+bail_on_error
+
+echo
+echo "Preprocessing rlogs in $rlog_process_dir..."
+echo
+
 # Archive previous plots_torque
-PD=$OP/plots_torque
-if [ -d $PD ]; then
-  rm -rf ${PD}-
-  mv $PD ${PD}-
+plots_dir=$process_dir/plots_torque
+if [ -d $plots_dir ]; then
+  rm -rf ${plots_dir}-
+  mv $plots_dir ${plots_dir}-
 fi
 bail_on_error
 
-cd $PROCDIR/sunnypilot
+cd $tools_dir/sunnypilot
 # Update hardcoded paths on processing and training scripts
 ## Updating from original
-sed -i "s:home, 'Downloads':'/$OP':g" tools/tuning/lat.py > /dev/null 2>&1
-sed -i "s:~/Downloads:$OP:g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:home, 'Downloads':'/$process_dir':g" tools/tuning/lat.py > /dev/null 2>&1
+sed -i "s:~/Downloads:$process_dir:g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:os.path.join(os.path.expanduser('~'), 'Downloads/rlogs/output/'):'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s: and has_upper_word(dir_name)::g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s:\"GENESIS\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
-sed -i "s:\$home_dir/Downloads/rlogs/output/GENESIS:/$OP:g" $PROCDIR/OP_ML_FF/latmodel_temporal.jl > /dev/null 2>&1
+sed -i "s:\$home_dir/Downloads/rlogs/output/GENESIS:/$process_dir:g" $tools_dir/OP_ML_FF/latmodel_temporal.jl > /dev/null 2>&1
 
 ## Updating from after running nnlc-review
-sed -i "s:$RVW:$OP:g" tools/tuning/lat.py > /dev/null 2>&1
-sed -i "s:$RVW/plots:$OP/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
-sed -i "s:$RVW/':$OP/':g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:$review_dir:$process_dir:g" tools/tuning/lat.py > /dev/null 2>&1
+sed -i "s:$review_dir/plots:$process_dir/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
+sed -i "s:$review_dir/':$process_dir/':g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:'/data/output/$VEHICLE/':'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s:\"review\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 
-
 # Begin processing
 sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
-
-cd $PROCDIR/sunnypilot
-sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
-PYTHONPATH=. tools/tuning/lat.py --path $RLOGS --outpath $OP
+PYTHONPATH=. tools/tuning/lat.py --path $rlog_process_dir --outpath $process_dir
 bail_on_error
 
 echo
@@ -118,7 +84,7 @@ echo "Processing step 1..."
 echo
 
 sed -i 's/PREPROCESS_ONLY = True/PREPROCESS_ONLY = False/' tools/tuning/lat_settings.py > /dev/null 2>&1
-PYTHONPATH=. tools/tuning/lat.py --path $OP --outpath $OP
+PYTHONPATH=. tools/tuning/lat.py --path $process_dir --outpath $process_dir
 bail_on_error
 
 echo
@@ -150,18 +116,20 @@ else
 fi
 
 echo
-cd $OP
+cd $process_dir
 # Set CUDA runtime version if not latest supported by driver
-CUDAVER=$(julia -e 'using CUDA;print(CUDA.driver_version())')
-CURRVER=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
-if [[ $(version $CURRVER) -lt $(version $CUDAVER) ]]; then
-  echo "Setting CUDA runtime version"
-  CUDASTR=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$CUDASTR")
-  julia $CUDASTR
-  echo "Updated CUDA runtime version:"
-  echo $(julia -e 'using CUDA;print(CUDA.runtime_version())')
+installed_cuda_version=$(julia -e 'using CUDA;print(CUDA.runtime_version())')
+echo "Current CUDA runtime version: $installed_cuda_version"
+max_supported_cuda_version=$(julia -e 'using CUDA;print(CUDA.driver_version())')
+echo "Latest CUDA runtime version supported by installed drivers: $max_supported_cuda_version"
+if [[ $(version $installed_cuda_version) -ne $(version $max_supported_cuda_version) ]]; then
+  echo "Setting CUDA runtime version to latest supported version: $max_supported_cuda_version"
+  cuda_update_string=$(printf 'using CUDA; CUDA.set_runtime_version!(v\"%s\");' "$max_supported_cuda_version")
+  julia $cuda_update_string
+  echo "Updated CUDA runtime version"
+  echo
 fi
-julia $PROCDIR/OP_ML_FF/latmodel_temporal.jl
+julia $tools_dir/OP_ML_FF/latmodel_temporal.jl
 bail_on_error
 
 echo
