@@ -61,7 +61,7 @@ In the event you have rlogs copied directly from the comma device with the origi
 4. Optional. Delete the files under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
 
 ### Reviewing Individual Route Rlogs
-When working with noisy data, it can be helpful to have a more granular way to review and filter what logs you want to include or exclude when generating a model. This feature allows for processing of rlogs per individual route, outputting the plots_torque/ directory and lat_accel_vs_torque plots for each route for manual review.
+When working with noisy data, it can be helpful to have a more granular way to review and filter what logs you want to include or exclude when generating a model. This feature allows for processing of rlogs per individual route, outputting the plots_torque/ directory and lat_accel_vs_torque plots of each route for manual review.
 
 **Instructions**
 1. Ensure rlog.zst files are present under `/data/rlogs/$VEHICLE/$DEVICE_ID` and named according to the required format: `[DEVICE_ID]_[ROUTE]--rlog.zst`
@@ -72,30 +72,31 @@ When working with noisy data, it can be helpful to have a more granular way to r
     - `[DEVICE_ID]_[ROUTE_NAME]-lat_accel_vs_torque.png`
 
 **Notes:**
-- When reviewing individual route outputs, the strongest indicator of rlog quality is the number of Driver torque events (column 3) listed the lat_accel_vs_torque plot, the ratio of Driver events to LKA events (column 2), and the overall shape and distribution of the Driver events. Routes with a large ratio of driver to LKA events or a noisy pattern of driver events should be removed from the pool to reduce the amount of low quality data going into the model.
+- When reviewing individual route outputs, the strongest indicators of rlog quality are the number of Driver torque events (column 3) listed the lat_accel_vs_torque plot, the ratio of Driver events to LKA events (column 2), and the overall shape and distribution of the Driver events. Routes with a large ratio of driver to LKA events or a noisy pattern of driver events should be removed from the pool to reduce the amount of low quality data in the training dataset.
 
 ### Post-Processing Cleanup
-When changing the pool of rlogs under `/data/rlogs`, you would normally also need to remember to clean up the rlogs and lat files present in the processing and review directories. `nnlc-clean` simplifies this by allowing for quick cleanup of the output directory.
+When switching to another set of rlogs under `/data/rlogs` or removing previously processed rlogs from the dataset, you would normally also need to remember to manually delete the rlogs and lat files present in the processing directory. `nnlc-clean` simplifies this by allowing for quick cleanup of the output directory. Be aware that once run this cleanup is irreversible, but does not delete any files outside of the output directory so any unintentional deletions can generally be recreated by running processing again.
 
 **Instructions**
 1. Run the processing and review cleanup script using docker exec:</br>
   `docker exec -it nnlc bash -c nnlc-clean`
-2. You will be presented with a list of files that would be deleted followed by a (y/n) prompt for each of these options:
+2. For each case where matching files are identified for cleanup, you will be presented with a list of files that would be deleted followed by a (y/n) prompt for each of these options:
     - `nnlc-process` lat files & processing and training outputs
     - `nnlc-process` rlogs copied to the processing directory
+    - `nnlc-review` route plots
     - `nnlc-review` lat files & processing outputs
     - `nnlc-review` rlogs copied to the review processing directory
 
 **Notes:**
-- There is intentionally no option to clean logs from the rlog download directory, as permanently deleting your entire `rlog-import` archive would rarely be desired and as such should be a deliberate action.
+- There is intentionally no option to clean logs from the rlog download directory, as permanently deleting your entire `rlog-import` archive would rarely be desired and as such should be a deliberate, manual action.
 
 
 ## Installation
 
 ### Windows
 1. Enable virtualization in BIOS. Refer to your motherboard's documentation for where this setting is located. Typically this is named 'VT-x' or 'SVM' and located under CPU Configuration or similar.
-2. From PowerShell, install [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install):</br>`wsl --install`
-3. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with WSL 2 backend.
+2. From PowerShell, install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install):</br>`wsl --install`
+3. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with WSL2 backend.
 4. Follow the instructions in [GPU Support](#gpu-support).
 5. Download the provided docker-compose-windows.yml file.
 6. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
@@ -113,7 +114,7 @@ When changing the pool of rlogs under `/data/rlogs`, you would normally also nee
 2. Follow the instructions in [GPU Support](#gpu-support).
 3. Download the provided docker-compose-linux.yml file.
 4. Update environment variables for your vehicle and comma device ID. See [Environment Variables](#environment-variables).
-5. Create a mountpoint for the data volume. If using the default path: `sudo mkdir /opt/nnlc`.
+5. Create a mountpoint for the data volume. If using the default path from the supplied docker-compose: `sudo mkdir /opt/nnlc`.
 6. Update the data mountpoint's owner to the container user: `sudo chown -R 1234:1234 /opt/nnlc`
 5. Create the container (example):</br>`docker compose -f /PATH-TO/docker-compose-linux.yml up -d`
     - This will create the **data** volume as a bind mount accessible under `/opt/nnlc` - see note below.
@@ -135,10 +136,11 @@ Some packages may need to be installed on the host system in order to use the GP
   2. Restart the docker daemon with `sudo systemctl restart docker`
 
 - **Windows**
-  1. Untested, but support should already be included with Docker Desktop using WSL 2. See [Docker GPU Support Documentation](https://docs.docker.com/desktop/features/gpu/).
+  1. No additional packages are required as support is included with Nvidia drivers and Docker Desktop. See [Docker GPU Support Documentation](https://docs.docker.com/desktop/features/gpu/).
 
 ### Other
-- Other GPU types are not currently supported by the training scripts due to CUDA requirement.
+- Apple Metal packages are included, but this functionality has not been tested.
+- Other GPU types are not currently supported by the training scripts.
 - CPU training is not supported as this functionality is not working correctly in the training scripts and results in a broken model.
 
 
@@ -239,17 +241,23 @@ See below for a diagram of the data volume directory structure, where certain fi
 ## Misc
 ### Logging
 The following logs are stored under `/data/logs` for basic debugging purposes. These are overwritten each time the associated script is run to prevent unintentional accumulation, and as such only include the log for the latest run.
+- nnlc-clean_log.txt
+  - Generated by `nnlc-clean`
 - nnlc-process_log.txt
   - Generated by `nnlc-process`
+- nnlc-review_log.txt
+  - Generated by `nnlc-review`
 - rlog-import_log.txt
   - Generated by `rlog-import`
 - rlog-import_scheduled_log.txt
   - Generated by scheduled rlog import job
+- rlog-rename_log.txt
+  - Generated by `rlog-rename`
 
 ### Notable Untested Functionality
 The following may or may not work out-of-box. These items have not been tested and as such may not exactly match the documentation or could require additional work.
-- Other hosts: MacOS, non-Ubuntu Linux distros
-- Nvidia GPU on Windows host
+- Apple Metal
+- Untested hosts: MacOS, Linux distros besides Ubuntu
 
 
 ## Credits
