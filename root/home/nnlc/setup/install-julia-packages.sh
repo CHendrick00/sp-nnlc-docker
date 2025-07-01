@@ -41,8 +41,8 @@ julia -e 'using CUDA;' # Force precompile
 julia -e 'using cuDNN;' # Force precompile
 
 # Apple Metal
-julia -e 'import Pkg; Pkg.add("Metal");'
-julia -e 'using Metal;' # Force precompile
+# julia -e 'import Pkg; Pkg.add("Metal");'
+# julia -e 'using Metal;' # Force precompile
 
 # AMD, Intel not supported by tools at this time
 
