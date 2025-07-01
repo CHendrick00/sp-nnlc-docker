@@ -37,17 +37,13 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz
 RUN groupadd -g 1234 nnlc && \
     useradd -m -u 1234 -g nnlc nnlc
 
-# Create data volume filetree
+# Create home directory filetree
 RUN mkdir -p \
-  /data/config \
-  /data/logs \
-  /data/output \
-  /data/rlogs \
   /home/nnlc/setup/ \
   /home/nnlc/nnlc/
 
-# Set nnlc user permissions
-RUN chown -R nnlc:nnlc /data /home/nnlc
+# Positively set nnlc user permissions on home directory
+RUN chown -R nnlc:nnlc /home/nnlc
 RUN chmod -R u+rw /home/nnlc
 
 # Install NNLC tools
@@ -72,11 +68,24 @@ RUN chown nnlc:nnlc /home/nnlc/setup/install-nnlc-tools.sh && \
 USER nnlc
 RUN /home/nnlc/setup/install-nnlc-tools.sh
 
-# Copy NNLC utility scripts
-COPY root/home/nnlc/nnlc /home/nnlc/nnlc
+# Create data volume filetree
+USER root
+RUN mkdir -p \
+  /data/config \
+  /data/logs \
+  /data/output \
+  /data/review \
+  /data/rlogs
+
+# Set nnlc user ownership on data dir
+RUN chown -R nnlc:nnlc /data
 
 # Copy container startup scripts
 COPY root/etc /etc
+
+USER nnlc
+# Copy docker utility scripts
+COPY root/home/nnlc/nnlc /home/nnlc/nnlc
 
 # Make cronjobs executable and add script shortcuts
 USER root
