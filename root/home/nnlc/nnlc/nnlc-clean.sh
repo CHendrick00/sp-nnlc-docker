@@ -5,7 +5,7 @@ RLD=/data/output/$VEHICLE/rlogs
 RVW=$OP/review
 RLOGS_ROUTE=$RVW/rlogs_route
 
-# nnlc-process
+# nnlc-process processing outputs
 if [ -d $OP ]; then
   cd $OP
   echo
@@ -45,7 +45,7 @@ else
   echo "[$OP] doesn't exist. Nothing to do."
 fi
 
-# nnlc-process rlogs
+# nnlc-process processing rlogs
 if [ -d $RLD ]; then
   cd $RLD
   echo
@@ -85,11 +85,53 @@ else
   echo "[$RLD] doesn't exist. Nothing to do."
 fi
 
-# nnlc-review
+# nnlc-review route plots
 if [ -d $RVW ]; then
   cd $RVW
   echo
-  FILES=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" -o -wholename "plots*/*" ')' | sort)
+  FILES=$(find . -depth '(' -wholename "plots*/*" ')' | sort)
+  if [[ -n $FILES ]]; then
+    echo "NNLC-REVIEW ROUTE PLOTS"
+    echo "---------------------------"
+    echo "$FILES"
+    echo
+    while true; do
+      read -p "Clean nnlc-review output plots? This action is irreversable. (y/n) " yn
+      case $yn in
+          [Yy])
+            echo
+            rm -rf $RVW/*plots*
+            FILES=$(find . -depth '(' -wholename "*plots*/*" ')' | sort)
+            if [[ -n $FILES ]]; then
+              echo "An error occurred and some or all files could not be deleted. Please clean this directory manually."
+            else
+              echo "[$RVW] cleaned of plots."
+            fi
+            break;;
+          [Nn])
+            echo
+            echo "Skipping [$RVW]..."
+            break;;
+          *)
+            echo "Invalid response. Please answer y or n.";;
+      esac
+    done
+  else
+    echo
+    echo "[$RVW] already clean of plots. Nothing to do."
+  fi
+else
+  echo
+  echo "[$RVW] doesn't exist. Nothing to do."
+fi
+
+# The below 2 should generally never have files present unless nnlc-review failed or was stopped before completing.
+
+# nnlc-review processing outputs
+if [ -d $RVW ]; then
+  cd $RVW
+  echo
+  FILES=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" ')' | sort)
   if [[ -n $FILES ]]; then
     echo "NNLC-REVIEW OUTPUTS"
     echo "---------------------------"
@@ -100,8 +142,8 @@ if [ -d $RVW ]; then
       case $yn in
           [Yy])
             echo
-            rm -rf $RVW/*.lat $RVW/*.LAT $RVW/*.csv $RVW/*.feather $RVW/*.txt $RVW/*.png $RVW/*plots*
-            FILES=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" -o -wholename "*plots*/*" ')' | sort)
+            rm -rf $RVW/*.lat $RVW/*.LAT $RVW/*.csv $RVW/*.feather $RVW/*.txt $RVW/*.png
+            FILES=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" ')' | sort)
             if [[ -n $FILES ]]; then
               echo "An error occurred and some or all files could not be deleted. Please clean this directory manually."
             else
@@ -125,6 +167,7 @@ else
   echo "[$RVW] doesn't exist. Nothing to do."
 fi
 
+# nnlc-review processing rlogs
 if [ -d $RLOGS_ROUTE ]; then
   cd $RLOGS_ROUTE
   echo
