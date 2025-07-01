@@ -4,6 +4,12 @@
 # Files MUST be located under /data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata
 # Files will be renamed and placed in /data/rlogs/$VEHICLE/$DEVICE_ID
 
+  # Check for other required variables
+  if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
+    echo "VEHICLE and DEVICE_ID environment variables must be set to rename rlogs. Aborting..."
+    exit 0
+  fi
+
 dirin="/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata"
 if [[ ! -d $dirin ]]; then
   echo "Directory $dirin not found. Please make sure you have copied to the correct"

@@ -10,8 +10,8 @@ fi
 # Set up SSH keys if rlog importing is enabled
 if [[ -n $ENABLE_RLOGS_IMPORTER ]] && [[ $ENABLE_RLOGS_IMPORTER == 'true' ]]; then
   # Check for other required variables
-  if [[ ! -n $COMMA_IP ]] || [[ ! -n $DEVICE_ID ]]; then
-    echo "COMMA_IP and DEVICE_ID must be set to import rlogs. Aborting..."
+  if [[ ! -n $COMMA_IP ]]; then
+    echo "COMMA_IP must be set to import rlogs. Aborting..."
     exit 0
   fi
   # Create SSH directory
