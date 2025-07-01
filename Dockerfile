@@ -46,23 +46,37 @@ RUN mkdir -p \
   /home/nnlc/setup/ \
   /home/nnlc/nnlc/
 
-# Copy setup files
-COPY root/etc /etc
-COPY root/home/nnlc/setup /home/nnlc/setup
-
 # Set nnlc user permissions
 RUN chown -R nnlc:nnlc /data /home/nnlc
 RUN chmod -R u+rw /home/nnlc
-RUN chmod u+x /home/nnlc/setup/*.sh
 
 # Install NNLC tools
+USER root
+COPY root/home/nnlc/setup/install-nnlc-dependencies.sh /home/nnlc/setup/install-nnlc-dependencies.sh
+RUN chown nnlc:nnlc /home/nnlc/setup/install-nnlc-dependencies.sh && \
+  chmod u+x /home/nnlc/setup/install-nnlc-dependencies.sh
 USER nnlc
 RUN /home/nnlc/setup/install-nnlc-dependencies.sh
+
+USER root
+COPY root/home/nnlc/setup/install-julia-packages.sh /home/nnlc/setup/install-julia-packages.sh
+RUN chown nnlc:nnlc /home/nnlc/setup/install-julia-packages.sh && \
+  chmod u+x /home/nnlc/setup/install-julia-packages.sh
+USER nnlc
 RUN . /home/nnlc/.bash_functions && /home/nnlc/setup/install-julia-packages.sh
+
+USER root
+COPY root/home/nnlc/setup/install-nnlc-tools.sh /home/nnlc/setup/install-nnlc-tools.sh
+RUN chown nnlc:nnlc /home/nnlc/setup/install-nnlc-tools.sh && \
+  chmod u+x /home/nnlc/setup/install-nnlc-tools.sh
+USER nnlc
 RUN /home/nnlc/setup/install-nnlc-tools.sh
 
 # Copy NNLC utility scripts
 COPY root/home/nnlc/nnlc /home/nnlc/nnlc
+
+# Copy container startup scripts
+COPY root/etc /etc
 
 # Make cronjobs executable and add script shortcuts
 USER root
@@ -71,6 +85,7 @@ RUN chmod u+s $(which cron) && \
   chmod u+x /etc/s6-overlay/s6-rc.d/init-rlog-import/run && \
   chmod u+rwx -R /data && \
   chmod u+x /home/nnlc/nnlc/*.sh && \
+  ln -sf /home/nnlc/nnlc/nnlc-backup-log.sh /usr/local/bin/nnlc-backup && \
   ln -sf /home/nnlc/nnlc/nnlc-clean-log.sh /usr/local/bin/nnlc-clean && \
   ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
   ln -sf /home/nnlc/nnlc/nnlc-review-log.sh /usr/local/bin/nnlc-review && \
