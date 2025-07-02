@@ -68,22 +68,14 @@ RUN chown nnlc:nnlc /home/nnlc/setup/install-nnlc-tools.sh && \
 USER nnlc
 RUN /home/nnlc/setup/install-nnlc-tools.sh
 
-# Create data volume filetree
+# Initialize data volume
 USER root
-RUN mkdir -p \
-  /data/config \
-  /data/logs \
-  /data/output \
-  /data/review \
-  /data/rlogs
-
-# Set nnlc user ownership on data dir
+RUN mkdir /data
 RUN chown -R nnlc:nnlc /data
 
 # Copy container startup scripts
 COPY root/etc /etc
 
-USER nnlc
 # Copy docker utility scripts
 COPY root/home/nnlc/nnlc /home/nnlc/nnlc
 
@@ -93,6 +85,7 @@ RUN chmod u+s $(which cron) && \
   chown -R nnlc:nnlc /etc/s6-overlay/s6-rc.d/init-rlog-import && \
   chmod u+x /etc/s6-overlay/s6-rc.d/init-rlog-import/run && \
   chmod u+rwx -R /data && \
+  chown -R nnlc:nnlc /home/nnlc/ && \
   chmod u+x /home/nnlc/nnlc/*.sh && \
   ln -sf /home/nnlc/nnlc/nnlc-backup-log.sh /usr/local/bin/nnlc-backup && \
   ln -sf /home/nnlc/nnlc/nnlc-clean-log.sh /usr/local/bin/nnlc-clean && \
@@ -104,5 +97,5 @@ RUN chmod u+s $(which cron) && \
 # Container initialization
 USER nnlc
 VOLUME /data
-WORKDIR /
+WORKDIR /home/nnlc/nnlc
 ENTRYPOINT ["/init"]
