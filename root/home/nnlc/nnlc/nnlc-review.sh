@@ -23,7 +23,7 @@ fi
 cd /home/nnlc/nnlc
 
 # activate nnlc env
-. /home/nnlc/.bashrc
+. /home/nnlc/.bash_functions
 conda activate nnlc
 
 # set variables for required operating directories
@@ -70,9 +70,9 @@ sed -i "s:\"$VEHICLE\":\"review\":g" tools/tuning/lat_to_csv_torquennd.py > /dev
 
 # Generate list of routes
 cd $review_rlog_dir
-for f in *--rlog.zst
+for logfile in $(find . -depth -name "*--rlog.zst")
 do
-    printf "%s\n" "${f%--*--rlog.zst}"
+  echo $logfile | sed -E 's/--[0-9]+--rlog.zst//g' | sed -E 's/[./a-zA-Z0-9]*_//g'
 done |
 sort |
 uniq > "$review_dir/routes.txt"
@@ -82,7 +82,7 @@ rm -r $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_d
 
 cd $tools_dir/sunnypilot
 while IFS= read -r line; do
-  cp $review_rlog_dir/$line*.zst $review_rlog_route_dir
+  cp $(echo $(find $review_rlog_dir -depth -name "*$line*--rlog.zst")) $review_rlog_route_dir
 
   sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
   PYTHONPATH=. tools/tuning/lat.py --path $review_rlog_route_dir --outpath $review_dir
