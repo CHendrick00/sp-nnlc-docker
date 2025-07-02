@@ -56,6 +56,8 @@ conda create -y -n $NNLC
 bail_on_error
 . /home/nnlc/miniconda3/bin/activate
 bail_on_error
+conda init
+bail_on_error
 conda activate $NNLC
 bail_on_error
 conda install -y python==3.12 numpy tqdm p-tqdm scons pycapnp zstandard smbus2 requests scipy matplotlib pandas scikit-learn pyarrow
