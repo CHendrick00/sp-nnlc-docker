@@ -86,7 +86,7 @@ RUN chmod u+s $(which cron) && \
   chmod u+x /etc/s6-overlay/s6-rc.d/init-rlog-import/run && \
   chmod u+rwx -R /data && \
   chown nnlc:nnlc /home/nnlc/nnlc/*.sh && \
-  chmod u+x /home/nnlc/nnlc/*.sh && \
+  chmod -R u+x /home/nnlc/nnlc/*.sh /home/nnlc/nnlc/sunnypilot && \
   ln -sf /home/nnlc/nnlc/nnlc-backup-log.sh /usr/local/bin/nnlc-backup && \
   ln -sf /home/nnlc/nnlc/nnlc-clean-log.sh /usr/local/bin/nnlc-clean && \
   ln -sf /home/nnlc/nnlc/nnlc-process-log.sh /usr/local/bin/nnlc-process && \
