@@ -23,7 +23,7 @@ fi
 cd /home/nnlc/nnlc
 
 # activate nnlc env
-. /home/nnlc/.bashrc
+. /home/nnlc/.bash_functions
 conda activate nnlc
 
 # set variables for required operating directories
@@ -42,8 +42,20 @@ fi
 echo
 echo "Copying/updating rlog.zst files from $rlog_source_dir to $rlog_process_dir..."
 echo
-rsync --mkpath -avh --prune-empty-dirs --info=progress2 --include '*rlog.zst' $rlog_source_dir/ $rlog_process_dir
-bail_on_error
+cd $rlog_source_dir
+find . -name "*.zst" | while read source_file; do
+  new_filename=$(echo $source_file | sed 's:_:|:g' | sed 's:./::')
+  new_file="$rlog_process_dir/$new_filename"
+  new_dir=$(echo $new_file | sed 's:/[^/]*$::')
+  if [ ! -d $new_dir ]; then
+    mkdir -p $new_dir
+    bail_on_error
+  fi
+  if [ ! -s $new_file ]; then
+    cp -v $source_file $new_file
+    bail_on_error
+  fi
+done
 
 echo
 echo "Preprocessing rlogs in $rlog_process_dir..."
