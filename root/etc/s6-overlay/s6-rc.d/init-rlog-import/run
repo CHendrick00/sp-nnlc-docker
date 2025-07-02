@@ -1,7 +1,13 @@
 #!/command/with-contenv bash
 
 # Save environment variables to a file readable for cron
-env > /home/nnlc/nnlc.env
+env | grep \
+  -e "COMMA_IP" \
+  -e "DEVICE_ID" \
+  -e "ENABLE_RLOGS_IMPORTER" \
+  -e "ENABLE_RLOGS_SCHEDULER" \
+  -e "VEHICLE" \
+  | sort > /home/nnlc/nnlc.env
 
 if [[ ! -d "/data/config" ]]; then
   mkdir -p '/data/config'
