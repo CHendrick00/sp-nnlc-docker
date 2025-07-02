@@ -9,7 +9,7 @@
 # and leave the files there
 
 # Load environment variables if running from cron
-. /home/nnlc/nnlc.env 2>&1
+. /home/nnlc/nnlc.env
 
 #=============================================
 # MODIFY THESE
