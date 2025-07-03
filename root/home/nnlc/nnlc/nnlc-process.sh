@@ -47,7 +47,7 @@ ls -1f *.zst | while read source_file; do
   new_filename="${source_file/_/|}"
   new_file="$process_rlog_dir/$new_filename"
   if [ ! -s $new_file ]; then
-    cp -v $source_file $new_file
+    ln -v $source_file $new_file
     bail_on_error
   fi
 done
@@ -78,8 +78,7 @@ sed -i "s:\$home_dir/Downloads/rlogs/output/GENESIS:/$process_dir:g" $tools_dir/
 sed -i "s:$review_dir:$process_dir:g" tools/tuning/lat.py > /dev/null 2>&1
 sed -i "s:$review_dir/plots:$process_dir/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:$review_dir/':$process_dir/':g" tools/tuning/lat_plot.py > /dev/null 2>&1
-sed -i "s:'/data/output/$VEHICLE/':'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
-sed -i "s:\"review\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:'/data/review/':'/data/output/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 
 # Begin processing
 sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
