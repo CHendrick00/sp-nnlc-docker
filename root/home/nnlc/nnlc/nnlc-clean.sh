@@ -25,11 +25,15 @@ clean() {
     sleep 1 &
     wait
     while true; do
-      read -p "Clean $prompt? This action is irreversable. (y/n) " INP
+      read -p "Clean $prompt? This action is irreversable. (y/n): " INP
       case $INP in
         [Yy])
           echo
-          rm -rf $files
+          rm -f $files > /dev/null 2>&1
+          empty_dirs=$(find $base_dir -mindepth 1 -type d -empty | sed "s:$base_dir/:./:")
+          cd $base_dir
+          rmdir -P $empty_dirs --parents --ignore-fail-on-non-empty > /dev/null 2>&1
+          cd /home/nnlc/setup # random safe dir
           count_post=$(find $base_dir -depth -type f $find_pattern | wc -l)
           if [[ $count_post -gt 0 ]]; then
             echo "An error occurred and [$count_post] files could not be deleted. Please clean [$base_dir] manually."
@@ -60,27 +64,26 @@ review_dir=/data/review/$VEHICLE
 review_rlog_dir=$review_dir/rlogs/$DEVICE_ID
 review_rlog_route_dir=$review_dir/rlogs_route
 
-pattern_process_outputs="( -name *.lat -o -name *.LAT -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
-pattern_review_outputs="( -name *.lat -o -name *.LAT -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* ) -not -path *-plots_torque/* -not -path *-lat_accel_vs_torque.png"
+pattern_process_outputs="( -iname *.lat -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
+pattern_review_outputs="( -iname *.lat -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* ) -not -path *-plots_torque/* -not -path *-lat_accel_vs_torque.png"
 pattern_review_plots="( -wholename *plots*/* -o -name *--*.png )"
-pattern_rlogs="( -name *.zst -o -name *.ZST )"
+pattern_rlogs="( -iname *.zst )"
 
 
 while true; do
-  # TODO - sort files vs dirs, delete empty dirs in list after
-  files_process_outputs=$(find $process_dir -depth -type f $pattern_process_outputs | sort -f)
-  files_process_rlogs=$(find $process_rlog_dir -depth -type f $pattern_rlogs | sort -f)
-  files_review_outputs=$(find $review_dir -depth -type f $pattern_review_outputs | sort -f)
-  files_review_rlogs=$(find $review_rlog_dir -depth -type f $pattern_rlogs | sort -f)
-  files_review_rlogs_route=$(find $review_rlog_route_dir -depth -type f $pattern_rlogs | sort -f)
-  files_review_plots=$(find $review_dir -depth -type f $pattern_review_plots | sort -f)
+  files_process_outputs=$(find $process_dir -depth $pattern_process_outputs | sort -f)
+  files_process_rlogs=$(find $process_rlog_dir -depth $pattern_rlogs | sort -f)
+  files_review_outputs=$(find $review_dir -depth $pattern_review_outputs | sort -f)
+  files_review_rlogs=$(find $review_rlog_dir -depth $pattern_rlogs | sort -f)
+  files_review_rlogs_route=$(find $review_rlog_route_dir -depth $pattern_rlogs | sort -f)
+  files_review_plots=$(find $review_dir -depth $pattern_review_plots | sort -f)
 
-  count_process_outputs=$(echo "$files_process_outputs" | wc -l )
-  count_process_rlogs=$(echo "$files_process_rlogs" | wc -l )
-  count_review_outputs=$(echo "$files_review_outputs" | wc -l )
-  count_review_rlogs=$(echo "$files_review_rlogs" | wc -l )
-  count_review_rlogs_route=$(echo "$files_review_rlogs_route" | wc -l )
-  count_review_plots=$(echo "$files_review_plots" | wc -l )
+  count_process_outputs=$(echo "$files_process_outputs" | grep . | wc -l )
+  count_process_rlogs=$(echo "$files_process_rlogs" | grep . | wc -l )
+  count_review_outputs=$(echo "$files_review_outputs" | grep . | wc -l )
+  count_review_rlogs=$(echo "$files_review_rlogs" | grep . | wc -l )
+  count_review_rlogs_route=$(echo "$files_review_rlogs_route" | grep . | wc -l )
+  count_review_plots=$(echo "$files_review_plots" | grep . | wc -l )
 
   echo
   echo "NNLC-CLEAN"
