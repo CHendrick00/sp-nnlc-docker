@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 process_dir=/data/output/$VEHICLE
-process_rlog_dir=$process_dir/rlogs
+process_rlog_dir=$process_dir/rlogs/$DEVICE_ID
 review_dir=/data/review/$VEHICLE
-review_rlog_dir=$review_dir/rlogs
+review_rlog_dir=$review_dir/rlogs/$DEVICE_ID
 review_rlog_route_dir=$review_dir/rlogs_route
 
 # nnlc-process processing outputs
@@ -16,6 +16,8 @@ if [ -d $process_dir ]; then
     echo "---------------------------"
     echo "$files"
     echo
+    sleep 1 &
+    wait
     while true; do
       read -p "Clean nnlc-process outputs directory? This action is irreversable. (y/n) " INP
       case $INP in
@@ -56,6 +58,8 @@ if [ -d $process_rlog_dir ]; then
     echo "---------------------------"
     echo "$files"
     echo
+    sleep 1 &
+    wait
     while true; do
       read -p "Clean rlogs in nnlc-process processing directory? This action is irreversable. (y/n) " INP
       case $INP in
@@ -96,6 +100,8 @@ if [ -d $review_dir ]; then
     echo "---------------------------"
     echo "$files"
     echo
+    sleep 1 &
+    wait
     while true; do
       read -p "Clean nnlc-review output plots? This action is irreversable. (y/n) " INP
       case $INP in
@@ -138,6 +144,8 @@ if [ -d $review_dir ]; then
     echo "---------------------------"
     echo "$files"
     echo
+    sleep 1 &
+    wait
     while true; do
       read -p "Clean nnlc-review outputs directory? This action is irreversable. (y/n) " INP
       case $INP in
@@ -169,7 +177,7 @@ else
 fi
 
 # nnlc-review processing rlogs
-if [ -d $review_rlog_dir || -d $review_rlog_route_dir ]; then
+if [ -d $review_rlog_dir ] || [ -d $review_rlog_route_dir ]; then
   echo
   cd $review_dir
   files=$(find . -depth '(' -name "*.zst" -o -name "*.ZST" ')' -path "$review_rlog_dir/*" -path "$review_rlog_route_dir/*"  | sort)
@@ -178,6 +186,8 @@ if [ -d $review_rlog_dir || -d $review_rlog_route_dir ]; then
     echo "---------------------------"
     echo "$files"
     echo
+    sleep 1 &
+    wait
     while true; do
       read -p "Clean rlogs in nnlc-review processing directory? This action is irreversable. (y/n) " INP
       case $INP in

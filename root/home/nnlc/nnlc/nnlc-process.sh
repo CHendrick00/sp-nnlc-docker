@@ -29,23 +29,23 @@ conda activate nnlc
 # set variables for required operating directories
 tools_dir=/home/nnlc/nnlc
 process_dir=/data/output/$VEHICLE
+process_rlog_dir=$process_dir/rlogs/$DEVICE_ID
 review_dir=/data/review/$VEHICLE
 rlog_source_dir=/data/rlogs/$VEHICLE/$DEVICE_ID
-rlog_process_dir=$process_dir/rlogs/$DEVICE_ID
 
 # Create directories if they don't exist
-if [ ! -d $rlog_process_dir ]; then
-  mkdir -p $rlog_process_dir
+if [ ! -d $process_rlog_dir ]; then
+  mkdir -p $process_rlog_dir
   bail_on_error
 fi
 
 echo
-echo "Copying/updating rlog.zst files from $rlog_source_dir to $rlog_process_dir..."
+echo "Copying/updating rlog.zst files from $rlog_source_dir to $process_rlog_dir..."
 echo
 cd $rlog_source_dir
 ls -1f *.zst | while read source_file; do
   new_filename="${source_file/_/|}"
-  new_file="$rlog_process_dir/$new_filename"
+  new_file="$process_rlog_dir/$new_filename"
   if [ ! -s $new_file ]; then
     cp -v $source_file $new_file
     bail_on_error
@@ -53,7 +53,7 @@ ls -1f *.zst | while read source_file; do
 done
 
 echo
-echo "Preprocessing rlogs in $rlog_process_dir..."
+echo "Preprocessing rlogs in $process_rlog_dir..."
 echo
 
 # Archive previous plots_torque
@@ -83,7 +83,7 @@ sed -i "s:\"review\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev
 
 # Begin processing
 sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
-PYTHONPATH=. tools/tuning/lat.py --path $rlog_process_dir --outpath $process_dir
+PYTHONPATH=. tools/tuning/lat.py --path $process_rlog_dir --outpath $process_dir
 bail_on_error
 
 echo

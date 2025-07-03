@@ -20,6 +20,8 @@ if [ -d $process_dir ]; then
     echo "---------------------------"
     echo "$files"
     echo
+    sleep 1 &
+    wait
     cd $process_backup_dir
     while true; do
       read -p "Enter a custom backup name, or press Enter for default with timestamp: " INP

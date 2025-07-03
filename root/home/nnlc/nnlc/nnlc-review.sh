@@ -30,9 +30,9 @@ conda activate nnlc
 tools_dir=/home/nnlc/nnlc
 process_dir=/data/output/$VEHICLE
 review_dir=/data/review/$VEHICLE
-rlog_source_dir=/data/rlogs/$VEHICLE/$DEVICE_ID
 review_rlog_dir=$review_dir/rlogs/$DEVICE_ID
 review_rlog_route_dir=$review_dir/rlogs_route
+rlog_source_dir=/data/rlogs/$VEHICLE/$DEVICE_ID
 
 # Create directories if they don't exist
 if [[ ! -d $review_rlog_dir ]]; then
