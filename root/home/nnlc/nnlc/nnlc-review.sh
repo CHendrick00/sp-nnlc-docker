@@ -50,7 +50,7 @@ ls -1f *.zst | while read source_file; do
   new_filename="${source_file/_/|}"
   new_file="$review_rlog_dir/$new_filename"
   if [ ! -s $new_file ]; then
-    cp -v $source_file $new_file
+    ln -v $source_file $new_file
     bail_on_error
   fi
 done
@@ -64,22 +64,21 @@ cd $tools_dir/sunnypilot
 ## Updating from original
 sed -i "s:home, 'Downloads':'/$review_dir':g" tools/tuning/lat.py > /dev/null 2>&1
 sed -i "s:~/Downloads:$review_dir:g" tools/tuning/lat_plot.py > /dev/null 2>&1
-sed -i "s:os.path.join(os.path.expanduser('~'), 'Downloads/rlogs/output/'):'/data/output/$VEHICLE/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:os.path.join(os.path.expanduser('~'), 'Downloads/rlogs/output/'):'/data/review/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 sed -i "s: and has_upper_word(dir_name)::g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
-sed -i "s:\"GENESIS\":\"review\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:\"GENESIS\":\"$VEHICLE\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 
 ## Updating from after running nnlc-process
 sed -i "s:$process_dir:$review_dir:g" tools/tuning/lat.py > /dev/null 2>&1
 sed -i "s:$process_dir/plots:$review_dir/plots:g" tools/tuning/lat_plot.py > /dev/null 2>&1
 sed -i "s:$process_dir/':$review_dir/':g" tools/tuning/lat_plot.py > /dev/null 2>&1
-sed -i "s:'/data/output/':'/data/output/$VEHICLE/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
-sed -i "s:\"$VEHICLE\":\"review\":g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
+sed -i "s:'/data/output/':'/data/review/':g" tools/tuning/lat_to_csv_torquennd.py > /dev/null 2>&1
 
 # Generate list of routes
 cd $review_rlog_dir
 for logfile in $(find . -depth -name "*--rlog.zst")
 do
-  echo $logfile | sed -E 's/--[0-9]+--rlog.zst//g' | sed -E 's/[./a-zA-Z0-9]*_//g'
+  echo $logfile | sed -E 's/--[0-9]+--rlog.zst//g' | sed -E 's/[./a-zA-Z0-9]*\|//g'
 done |
 sort |
 uniq > "$review_dir/routes.txt"
@@ -89,7 +88,7 @@ rm -r $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_d
 
 cd $tools_dir/sunnypilot
 while IFS= read -r line; do
-  cp $(echo $(find $review_rlog_dir -depth -name "*$line*--rlog.zst")) $review_rlog_route_dir
+  ln $(echo $(find $review_rlog_dir -depth -name "*$line*--rlog.zst")) $review_rlog_route_dir
 
   sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
   PYTHONPATH=. tools/tuning/lat.py --path $review_rlog_route_dir --outpath $review_dir
@@ -116,10 +115,10 @@ while IFS= read -r line; do
     echo "No valid .lat files generated from route: $line"
   fi
 
-  route_name="${line/|/_}" ## XX: May not be needed anymore
-  mv "$review_dir/review lat_accel_vs_torque.png" "$review_dir/$route_name-lat_accel_vs_torque.png"
+  route_name="${line/|/_}"
+  mv "$review_dir/$VEHICLE lat_accel_vs_torque.png" "$review_dir/$route_name-$VEHICLE-lat_accel_vs_torque.png" > /dev/null 2>&1
   rm $review_dir/$route_name-plots_torque > /dev/null 2>&1
-  mv $review_dir/plots_torque $review_dir/$route_name-plots_torque
+  mv $review_dir/plots_torque $review_dir/$route_name-plots_torque > /dev/null 2>&1
   rm $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_dir/*.feather $review_dir/latfiles.txt > /dev/null 2>&1
 
 done < "$review_dir/routes.txt"
