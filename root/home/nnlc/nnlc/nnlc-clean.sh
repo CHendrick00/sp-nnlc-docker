@@ -1,222 +1,156 @@
 #!/usr/bin/env bash
 
+clean() {
+  header=$1
+  prompt=$2
+  base_dir=$3
+  files=$4
+  find_pattern=$5
+
+  echo
+  if [ ! -d $base_dir ]; then
+    echo
+    echo "[$base_dir] doesn't exist. Nothing to do."
+    echo
+  elif [[ ! -n $files ]]; then
+    echo
+    echo "[$base_dir] already clean. Nothing to do."
+    echo
+  else
+    echo $header
+    echo "---------------------------"
+    files_cleaned=$(echo "$files" | sed "s:/$base_dir/::")
+    echo "$files_cleaned"
+    echo
+    sleep 1 &
+    wait
+    while true; do
+      read -p "Clean $prompt? This action is irreversable. (y/n) " INP
+      case $INP in
+        [Yy])
+          echo
+          rm -rf $files
+          count_post=$(find $base_dir -depth -type f $find_pattern | wc -l)
+          if [[ $count_post -gt 0 ]]; then
+            echo "An error occurred and [$count_post] files could not be deleted. Please clean [$base_dir] manually."
+          else
+            echo "[$base_dir] cleaned."
+          fi
+        break;;
+        [Nn])
+          echo
+          echo "Skipping [$base_dir]..."
+          echo
+          echo
+          break;;
+        *)
+        echo
+        echo "Invalid response. Please answer y or n."
+        sleep 0 &
+        wait
+        ;;
+      esac
+    done
+  fi
+}
+
 process_dir=/data/output/$VEHICLE
 process_rlog_dir=$process_dir/rlogs/$DEVICE_ID
 review_dir=/data/review/$VEHICLE
 review_rlog_dir=$review_dir/rlogs/$DEVICE_ID
 review_rlog_route_dir=$review_dir/rlogs_route
 
-# nnlc-process processing outputs
-if [ -d $process_dir ]; then
-  cd $process_dir
-  echo
-  files=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" -o -wholename "plots*/*" -o -wholename "*steer_cmd/*" -o -wholename "*torque_adjusted_eps/*" ')' | sort)
-  if [[ -n $files ]]; then
-    echo "NNLC-PROCESS OUTPUTS"
-    echo "---------------------------"
-    echo "$files"
-    echo
-    sleep 1 &
-    wait
-    while true; do
-      read -p "Clean nnlc-process outputs directory? This action is irreversable. (y/n) " INP
-      case $INP in
-          [Yy])
-            echo
-            rm -rf $process_dir/*.lat $process_dir/*.LAT $process_dir/*.csv $process_dir/*.feather $process_dir/*.txt $process_dir/*.png $process_dir/plots* $process_dir/*steer_cmd $process_dir/*torque_adjusted_eps
-            files=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" -o -wholename "plots*/*" -o -wholename "*steer_cmd/*" -o -wholename "*torque_adjusted_eps/*" ')' | sort)
-            if [[ -n $files ]]; then
-              echo "An error occurred and some or all files could not be deleted. Please clean this directory manually."
-            else
-              echo "[$process_dir] cleaned."
-            fi
-            break;;
-          [Nn])
-            echo
-            echo "Skipping [$process_dir]..."
-            break;;
-          *)
-            echo "Invalid response. Please answer y or n.";;
-      esac
-    done
-  else
-    echo
-    echo "[$process_dir] already clean. Nothing to do."
-  fi
-else
-  echo
-  echo "[$process_dir] doesn't exist. Nothing to do."
-fi
+pattern_process_outputs="( -name *.lat -o -name *.LAT -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
+pattern_review_outputs="( -name *.lat -o -name *.LAT -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* ) -not -path *-plots_torque/* -not -path *-lat_accel_vs_torque.png"
+pattern_review_plots="( -wholename *plots*/* -o -name *--*.png )"
+pattern_rlogs="( -name *.zst -o -name *.ZST )"
 
-# nnlc-process processing rlogs
-if [ -d $process_rlog_dir ]; then
-  cd $process_rlog_dir
-  echo
-  files=$(find . -depth '(' -name "*.zst" -o -name "*.ZST" ')' | sort)
-  if [[ -n $files ]]; then
-    echo "NNLC-PROCESS RLOGS"
-    echo "---------------------------"
-    echo "$files"
-    echo
-    sleep 1 &
-    wait
-    while true; do
-      read -p "Clean rlogs in nnlc-process processing directory? This action is irreversable. (y/n) " INP
-      case $INP in
-          [Yy])
-            echo
-            rm -rf $process_rlog_dir/*.zst $process_rlog_dir/*.ZST
-            files=$(find . -depth '(' -name "*.zst" -o -name "*.ZST" ')' | sort)
-            if [[ -n $files ]]; then
-              echo "An error occurred and some or all files could not be deleted. Please clean this directory manually."
-            else
-              echo "[$process_rlog_dir] cleaned."
-            fi
-            break;;
-          [Nn])
-            echo
-            echo "Skipping [$process_rlog_dir]..."
-            break;;
-          *)
-            echo "Invalid response. Please answer y or n.";;
-      esac
-    done
-  else
-    echo
-    echo "[$process_rlog_dir] already clean. Nothing to do."
-  fi
-else
-  echo
-  echo "[$process_rlog_dir] doesn't exist. Nothing to do."
-fi
 
-# nnlc-review route plots
-if [ -d $review_dir ]; then
-  cd $review_dir
-  echo
-  files=$(find . -depth '(' -wholename "plots*/*" ')' | sort)
-  if [[ -n $files ]]; then
-    echo "NNLC-REVIEW ROUTE PLOTS"
-    echo "---------------------------"
-    echo "$files"
-    echo
-    sleep 1 &
-    wait
-    while true; do
-      read -p "Clean nnlc-review output plots? This action is irreversable. (y/n) " INP
-      case $INP in
-          [Yy])
-            echo
-            rm -rf $review_dir/*plots*
-            files=$(find . -depth '(' -wholename "*plots*/*" ')' | sort)
-            if [[ -n $files ]]; then
-              echo "An error occurred and some or all files could not be deleted. Please clean this directory manually."
-            else
-              echo "[$review_dir] cleaned of plots."
-            fi
-            break;;
-          [Nn])
-            echo
-            echo "Skipping [$review_dir]..."
-            break;;
-          *)
-            echo "Invalid response. Please answer y or n.";;
-      esac
-    done
-  else
-    echo
-    echo "[$review_dir] already clean of plots. Nothing to do."
-  fi
-else
-  echo
-  echo "[$review_dir] doesn't exist. Nothing to do."
-fi
+while true; do
+  # TODO - sort files vs dirs, delete empty dirs in list after
+  files_process_outputs=$(find $process_dir -depth -type f $pattern_process_outputs | sort -f)
+  files_process_rlogs=$(find $process_rlog_dir -depth -type f $pattern_rlogs | sort -f)
+  files_review_outputs=$(find $review_dir -depth -type f $pattern_review_outputs | sort -f)
+  files_review_rlogs=$(find $review_rlog_dir -depth -type f $pattern_rlogs | sort -f)
+  files_review_rlogs_route=$(find $review_rlog_route_dir -depth -type f $pattern_rlogs | sort -f)
+  files_review_plots=$(find $review_dir -depth -type f $pattern_review_plots | sort -f)
 
-# The below 2 should generally never have files present unless nnlc-review failed or was stopped before completing.
+  count_process_outputs=$(echo "$files_process_outputs" | wc -l )
+  count_process_rlogs=$(echo "$files_process_rlogs" | wc -l )
+  count_review_outputs=$(echo "$files_review_outputs" | wc -l )
+  count_review_rlogs=$(echo "$files_review_rlogs" | wc -l )
+  count_review_rlogs_route=$(echo "$files_review_rlogs_route" | wc -l )
+  count_review_plots=$(echo "$files_review_plots" | wc -l )
 
-# nnlc-review processing outputs
-if [ -d $review_dir ]; then
-  cd $review_dir
   echo
-  files=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" ')' | sort)
-  if [[ -n $files ]]; then
-    echo "NNLC-REVIEW OUTPUTS"
-    echo "---------------------------"
-    echo "$files"
-    echo
-    sleep 1 &
-    wait
-    while true; do
-      read -p "Clean nnlc-review outputs directory? This action is irreversable. (y/n) " INP
-      case $INP in
-          [Yy])
-            echo
-            rm -rf $review_dir/*.lat $review_dir/*.LAT $review_dir/*.csv $review_dir/*.feather $review_dir/*.txt $review_dir/*.png
-            files=$(find . -depth '(' -name "*.lat" -o -name "*.LAT" -o -name "*.csv" -o -name "*.feather" -o -name "*.txt" -o -name "*.png" ')' | sort)
-            if [[ -n $files ]]; then
-              echo "An error occurred and some or all files could not be deleted. Please clean this directory manually."
-            else
-              echo "[$review_dir] cleaned."
-            fi
-            break;;
-          [Nn])
-            echo
-            echo "Skipping [$review_dir]..."
-            break;;
-          *)
-            echo "Invalid response. Please answer y or n.";;
-      esac
-    done
-  else
-    echo
-    echo "[$review_dir] already clean. Nothing to do."
-  fi
-else
-  echo
-  echo "[$review_dir] doesn't exist. Nothing to do."
-fi
+  echo "NNLC-CLEAN"
+  echo "---------------------------"
+  echo "[1] nnlc-process processing outputs and lat files:    [$count_process_outputs] files"
+  echo "[2] nnlc-process cached rlogs:                        [$count_process_rlogs] files"
+  echo "[3] nnlc-review processing outputs and lat files:     [$count_review_outputs] files"
+  echo "[4] nnlc-review cached rlogs:                         [$(($count_review_rlogs+$count_review_rlogs_route))] files"
+  echo "[5] nnlc-review route plots:                          [$count_review_plots] files"
+  echo "[q] Quit"
+  sleep 0 &
+  wait
+  read -p "Please select an option: " INP
+  case $INP in
+    [1])
+      # nnlc-process processing outputs and lat files
+      clean \
+      "NNLC-PROCESS OUTPUTS" \
+      "nnlc-process processing outputs and lat files" \
+      $process_dir \
+      "$files_process_outputs" \
+      "$pattern_process_outputs"
+      ;;
+    [2])
+      clean \
+      "NNLC-PROCESS RLOGS" \
+      "nnlc-process cached rlogs" \
+      $process_rlog_dir \
+      "$files_process_rlogs" \
+      "$pattern_rlogs"
+      ;;
+    [3])
+      clean \
+      "NNLC-REVIEW OUTPUTS" \
+      "nnlc-review processing outputs and lat files" \
+      $review_dir \
+      "$files_review_outputs" \
+      "$pattern_review_outputs"
+      ;;
+    [4])
+      clean \
+      "NNLC-REVIEW RLOGS" \
+      "nnlc-process cached rlogs" \
+      $review_rlog_dir \
+      "$files_review_rlogs" \
+      "$pattern_rlogs"
 
-# nnlc-review processing rlogs
-if [ -d $review_rlog_dir ] || [ -d $review_rlog_route_dir ]; then
-  echo
-  cd $review_dir
-  files=$(find . -depth '(' -name "*.zst" -o -name "*.ZST" ')' -path "$review_rlog_dir/*" -path "$review_rlog_route_dir/*"  | sort)
-  if [[ -n $files ]]; then
-    echo "NNLC-REVIEW RLOGS"
-    echo "---------------------------"
-    echo "$files"
-    echo
-    sleep 1 &
-    wait
-    while true; do
-      read -p "Clean rlogs in nnlc-review processing directory? This action is irreversable. (y/n) " INP
-      case $INP in
-          [Yy])
-            echo
-            rm -rf $review_rlog_route_dir/*.zst $review_rlog_route_dir/*.ZST $review_rlog_dir/*.zst $review_rlog_dir/*.ZST
-            files=$(find . -depth '(' -name "*.zst" -o -name "*.ZST" ')' -path "$review_rlog_dir/*" -path "$review_rlog_route_dir/*"  | sort)
-            if [[ -n $files ]]; then
-              echo "An error occurred and some or all files could not be deleted. Please clean this directory manually."
-            else
-              echo "[$review_rlog_dir] and [$review_rlog_route_dir] cleaned."
-            fi
-            break;;
-          [Nn])
-            echo
-            echo "Skipping [$review_rlog_dir] and [$review_rlog_route_dir]..."
-            break;;
-          *)
-            echo "Invalid response. Please answer y or n.";;
-      esac
-    done
-  else
-    echo
-    echo "[$review_rlog_dir] and [$review_rlog_route_dir] already clean. Nothing to do."
-  fi
-else
-  echo
-  echo "[$review_rlog_dir] and [$review_rlog_route_dir] don't exist. Nothing to do."
-fi
+      clean \
+      "NNLC-REVIEW ROUTE RLOGS" \
+      "nnlc-process cached route rlogs" \
+      $review_rlog_route_dir \
+      "$files_review_rlogs_route" \
+      "$pattern_rlogs"
+      ;;
+    [5])
+      clean \
+      "NNLC-REVIEW ROUTE PLOTS" \
+      "nnlc-review route plots" \
+      $review_dir \
+      "$files_review_plots" \
+      "$pattern_review_plots"
+      ;;
+    [Qq])
+      break
+      ;;
+    *)
+      echo "Invalid response. Please select one of the listed options."
+      ;;
+  esac
+done
 
 echo
 echo "Done!"
