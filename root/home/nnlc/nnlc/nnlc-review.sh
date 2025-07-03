@@ -13,8 +13,8 @@ bail_on_error() {
   fi
 }
 
-if [[ ! -n $VEHICLE ]]; then
-  echo "Required environment variable VEHICLE not set. Cannot continue."
+if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
+  echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."
   exit 1
 fi
 
@@ -30,8 +30,8 @@ conda activate nnlc
 tools_dir=/home/nnlc/nnlc
 process_dir=/data/output/$VEHICLE
 review_dir=/data/review/$VEHICLE
-rlog_source_dir=/data/rlogs/$VEHICLE
-review_rlog_dir=$review_dir/rlogs
+rlog_source_dir=/data/rlogs/$VEHICLE/$DEVICE_ID
+review_rlog_dir=$review_dir/rlogs/$DEVICE_ID
 review_rlog_route_dir=$review_dir/rlogs_route
 
 # Create directories if they don't exist
@@ -45,8 +45,15 @@ fi
 echo
 echo "Copying/updating rlog.zst files from $rlog_source_dir to $review_rlog_dir..."
 echo
-rsync --mkpath -avh --prune-empty-dirs --info=progress2 --include '*rlog.zst' $rlog_source_dir/ $review_rlog_dir
-bail_on_error
+cd $rlog_source_dir
+ls -1f *.zst | while read source_file; do
+  new_filename="${source_file/_/|}"
+  new_file="$review_rlog_dir/$new_filename"
+  if [ ! -s $new_file ]; then
+    cp -v $source_file $new_file
+    bail_on_error
+  fi
+done
 
 echo
 echo "Preprocessing rlogs in $review_rlog_dir..."

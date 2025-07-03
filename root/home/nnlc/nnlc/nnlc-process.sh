@@ -13,8 +13,8 @@ bail_on_error() {
   fi
 }
 
-if [[ ! -n $VEHICLE ]]; then
-  echo "Required environment variable VEHICLE not set. Cannot continue."
+if [[ ! -n $VEHICLE ]] || [[ ! -n $DEVICE_ID ]]; then
+  echo "Required environment variables VEHICLE and/or DEVICE_ID not set. Cannot continue."
   exit 1
 fi
 
@@ -30,8 +30,8 @@ conda activate nnlc
 tools_dir=/home/nnlc/nnlc
 process_dir=/data/output/$VEHICLE
 review_dir=/data/review/$VEHICLE
-rlog_source_dir=/data/rlogs/$VEHICLE
-rlog_process_dir=$process_dir/rlogs
+rlog_source_dir=/data/rlogs/$VEHICLE/$DEVICE_ID
+rlog_process_dir=$process_dir/rlogs/$DEVICE_ID
 
 # Create directories if they don't exist
 if [ ! -d $rlog_process_dir ]; then
@@ -43,14 +43,9 @@ echo
 echo "Copying/updating rlog.zst files from $rlog_source_dir to $rlog_process_dir..."
 echo
 cd $rlog_source_dir
-find . -name "*.zst" | while read source_file; do
-  new_filename=$(echo $source_file | sed 's:_:|:g' | sed 's:./::')
+ls -1f *.zst | while read source_file; do
+  new_filename="${source_file/_/|}"
   new_file="$rlog_process_dir/$new_filename"
-  new_dir=$(echo $new_file | sed 's:/[^/]*$::')
-  if [ ! -d $new_dir ]; then
-    mkdir -p $new_dir
-    bail_on_error
-  fi
   if [ ! -s $new_file ]; then
     cp -v $source_file $new_file
     bail_on_error
