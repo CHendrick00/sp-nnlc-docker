@@ -69,12 +69,12 @@ cd $NNLCD
 
 echo
 if [ ! -s sunnypilot/tools/tuning/lat.py ]; then
-  echo "*** Downloading mmmorks sunnypilot fork for dataset pre-processing"
+  echo "*** Downloading sunnypilot fork for dataset pre-processing"
   echo
-  git clone https://github.com/mmmorks/sunnypilot.git
+  git clone https://github.com/CHendrick00/sunnypilot.git
   bail_on_error
   cd sunnypilot
-  git checkout 4084ee5e895bc97ca3cef369a3e866a59cef1adf
+  git checkout origin/tuning-tools
   rm -rf ./.git
   bail_on_error
   cd ..
