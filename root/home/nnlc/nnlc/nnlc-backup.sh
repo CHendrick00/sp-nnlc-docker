@@ -14,7 +14,6 @@ backup() {
   fi
 
   if [ -d $base_dir ]; then
-    cd $base_dir
     echo
     if [[ -n $files ]]; then
       echo "$header"
@@ -23,7 +22,6 @@ backup() {
       echo
       sleep 1 &
       wait
-      cd $backup_dir
       while true; do
         read -p "Enter a custom backup name, or press Enter for default with timestamp: " INP
         if [[ -n $INP ]]; then
@@ -36,11 +34,11 @@ backup() {
           echo "Using filename: $filename"
         else
           timestamp=$(date -u "+%Y%m%dT%H%M%SZ")
-          filename="$default_prefix_${VEHICLE}_${timestamp}.tar.gz"
+          filename="${default_prefix}_${VEHICLE}_${timestamp}.tar.gz"
           echo "Using default name: $filename"
         fi
 
-        existing_backup_file=$(find . -name "$filename")
+        existing_backup_file=$(find $backup_dir -name "$filename")
         if [[ -n $existing_backup_file ]]; then
           read -p "A file with a matching name already exists. Overwrite? (y to overwrite, or Enter to choose a different name): " INP1
           if [[ $INP1 == 'y' ]]; then
@@ -51,11 +49,13 @@ backup() {
           fi
         fi
 
-        cd $base_dir
         echo
-        echo "Creating backup"
+        echo "Creating backup $filename"
         echo "---------------------------"
-        tar -czvf $backup_dir/$filename $files $(ls latfiles_backup.txt rlogs_backup.txt 2>/dev/null)
+        formatted_files=$(sed "s:$base_dir/::g" <<< $files)
+        cd $base_dir
+        tar -czvf $backup_dir/$filename $(ls latfiles_backup.txt rlogs_backup.txt 2>/dev/null) -T - <<< $formatted_files
+        cd $backup_dir
         echo
         echo "Backup saved to $backup_dir/$filename"
         break
@@ -74,10 +74,10 @@ process_backup_dir=/data/backups/nnlc-process
 process_dir=/data/output/$VEHICLE
 process_rlog_dir=/data/output/$VEHICLE/rlogs
 
-review_backup_dir=/data/backups/nnlc-process
-review_dir=/data/output/$VEHICLE
+review_backup_dir=/data/backups/nnlc-review
+review_dir=/data/review/$VEHICLE
 
-rlog_backup_dir=/data/backups/rlogs/$VEHICLE
+rlog_backup_dir=/data/backups/rlogs
 rlog_dir=/data/rlogs/$VEHICLE
 
 pattern_process_outputs="( -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots_torque/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
@@ -87,6 +87,7 @@ pattern_latfiles="( -iname *.lat )"
 pattern_rlogs="( -iname *.zst )"
 
 while true; do
+  cd ~
   files_process_outputs=$(find $process_dir -depth $pattern_process_outputs | sort -f)
   files_process_latfiles=$(find $process_dir -depth $pattern_latfiles | sort -f)
   files_process_all="$files_process_latfiles"$'\n'"$files_process_outputs" # force latfiles to top of list
@@ -104,22 +105,20 @@ while true; do
   echo "[1] nnlc-process processing outputs:                [$count_process_outputs] files"
   echo "[2] nnlc-process processing outputs w/ latfiles:    [$count_process_all] files"
   echo "[3] nnlc-review route plots:                        [$count_review_plots] files"
-  echo "[4] rlog-import saved rlogs:                        [$count_rlogs] files"
+  echo "[4] rlog-import rlogs:                              [$count_rlogs] files"
   echo "[q] Quit"
   sleep 0 &
   wait
   read -p "Please select an option: " INP
   case $INP in
     [1])
-      cd $process_dir
       echo
       echo "Saving list of latfiles to latfiles_backup.txt"
-      echo $(find . -depth $pattern_latfiles | sort -f | sed 's:.*/::') > "$process_dir/latfiles_backup.txt"
+      echo "$(find $process_dir -depth $pattern_latfiles | sort -f | sed 's:.*/::')" > "$process_dir/latfiles_backup.txt"
       echo
 
-      cd $process_rlog_dir
       echo "Saving list of rlogs to rlogs_backup.txt"
-      echo $(find . -depth $pattern_rlogs | sort -f | sed 's:.*/::') > "$process_dir/rlogs_backup.txt"
+      echo "$(find $process_rlog_dir -depth $pattern_rlogs | sort -f | sed 's:.*/::')" > "$process_dir/rlogs_backup.txt"
       echo
 
       backup \
@@ -131,18 +130,16 @@ while true; do
       "$files_process_outputs" \
       "$pattern_process_outputs"
 
-      rm -f "$base_dir/latfiles_backup.txt" "$base_dir/rlogs_backup.txt" > /dev/null 2>&1
+      rm -f "$process_dir/latfiles_backup.txt" "$process_dir/rlogs_backup.txt" > /dev/null 2>&1
       ;;
     [2])
-      cd $process_dir
       echo
       echo "Saving list of latfiles to latfiles_backup.txt"
-      echo $(find . -depth $pattern_latfiles | sort -f | sed 's:.*/::') > "$process_dir/latfiles_backup.txt"
+      echo "$(find $process_dir -depth $pattern_latfiles | sort -f | sed 's:.*/::')" > "$process_dir/latfiles_backup.txt"
       echo
 
-      cd $process_rlog_dir
       echo "Saving list of rlogs to rlogs_backup.txt"
-      echo $(find . -depth $pattern_rlogs | sort -f | sed 's:.*/::') > "$process_dir/rlogs_backup.txt"
+      echo "$(find $process_rlog_dir -depth $pattern_rlogs | sort -f | sed 's:.*/::')" > "$process_dir/rlogs_backup.txt"
       echo
 
       backup \
@@ -154,7 +151,7 @@ while true; do
       "$files_process_all" \
       "$pattern_process_all"
 
-      rm -f "$base_dir/latfiles_backup.txt" "$base_dir/rlogs_backup.txt" > /dev/null 2>&1
+      rm -f "$process_dir/latfiles_backup.txt" "$process_dir/rlogs_backup.txt" > /dev/null 2>&1
       ;;
     [3])
       backup \
