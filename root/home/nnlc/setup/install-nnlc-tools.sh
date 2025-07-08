@@ -36,7 +36,7 @@ if [ ! -s OP_ML_FF/latmodel_temporal.jl ]; then
   git clone https://github.com/mmmorks/OP_ML_FF
   bail_on_error
   cd OP_ML_FF
-  git checkout 0116b9e3f0cfb49290936604b6b2f63325414bbc
+  git checkout 5c3e5a39620f8822acf01bed3bf484ffc187f31a
   rm -rf ./.git
   bail_on_error
   cd ..

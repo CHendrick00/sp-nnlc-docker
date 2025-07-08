@@ -18,8 +18,8 @@ echo
 echo "*** Installing Julia package requirements for training, as needed"
 echo "    NOTE: takes a while and writes about 5.6 GB to /home/nnlc/.julia"
 echo
-wget -O julia_packages.jl https://raw.githubusercontent.com/mmmorks/OP_ML_FF/0116b9e3f0cfb49290936604b6b2f63325414bbc/latmodel_temporal.jl
-head -36 julia_packages.jl | sed 's/# //' > deps.jl
+wget -O julia_packages.jl https://raw.githubusercontent.com/mmmorks/OP_ML_FF/5c3e5a39620f8822acf01bed3bf484ffc187f31a/latmodel_temporal.jl
+head -35 julia_packages.jl | sed 's/# //' > deps.jl
 julia deps.jl
 bail_on_error
 rm -f julia_packages.txt deps.jl
