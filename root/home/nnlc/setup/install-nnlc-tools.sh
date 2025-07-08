@@ -1,48 +1,23 @@
 #!/usr/bin/env bash
 
-# bail on nonzero RC function
-bail_on_error() {
-  RC=$?
-  if [ $RC -ne 0 ]; then
-    echo
-    echo "*** bailing with RC=$RC"
-    echo
-    exit 1
-  fi
-}
+nnlc_dir=/home/nnlc/nnlc
 
-cd /home/nnlc/nnlc
-
+cd $nnlc_dir
+echo "*** Downloading sunnypilot fork for dataset pre-processing"
 echo
-if [ ! -s sunnypilot/tools/tuning/lat.py ]; then
-  echo "*** Downloading sunnypilot fork for dataset pre-processing"
-  echo
-  git clone https://github.com/CHendrick00/sunnypilot.git
-  bail_on_error
-  cd sunnypilot
-  git checkout origin/tuning-tools
-  rm -rf ./.git
-  bail_on_error
-  cd ..
-else
-  echo "*** sunnypilot tree appears to already be present - skipping download"
-fi
+git clone https://github.com/CHendrick00/sunnypilot.git
+cd sunnypilot
+git checkout tuning-tools
+rm -rf ./.git
 echo
 
+cd $nnlc_dir
+echo "*** Downloading mmmorks NN training script fork"
 echo
-if [ ! -s OP_ML_FF/latmodel_temporal.jl ]; then
-  echo "*** Downloading mmmorks NN training script fork"
-  echo
-  git clone https://github.com/mmmorks/OP_ML_FF
-  bail_on_error
-  cd OP_ML_FF
-  git checkout 5c3e5a39620f8822acf01bed3bf484ffc187f31a
-  rm -rf ./.git
-  bail_on_error
-  cd ..
-else
-  echo "*** OP_ML_FF tree appears to already be present - skipping download"
-fi
+git clone https://github.com/mmmorks/OP_ML_FF
+cd OP_ML_FF
+git checkout 5c3e5a39620f8822acf01bed3bf484ffc187f31a
+rm -rf ./.git
 echo
 
 exit 0
