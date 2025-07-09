@@ -70,14 +70,14 @@ backup() {
   fi
 }
 
-process_backup_dir=/data/backups/nnlc-process
+process_backup_dir=/data/backups/nnlc-process/$VEHICLE
 process_dir=/data/output/$VEHICLE
 process_rlog_dir=/data/output/$VEHICLE/rlogs
 
-review_backup_dir=/data/backups/nnlc-review
+review_backup_dir=/data/backups/nnlc-review/$VEHICLE
 review_dir=/data/review/$VEHICLE
 
-rlog_backup_dir=/data/backups/rlogs
+rlog_backup_dir=/data/backups/rlogs/$VEHICLE
 rlog_dir=/data/rlogs/$VEHICLE
 
 pattern_process_outputs="( -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots_torque/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
