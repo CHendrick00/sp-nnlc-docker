@@ -86,8 +86,16 @@ uniq > "$review_dir/routes.txt"
 # Cleanup from previous runs
 rm -r $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_dir/*.feather $review_dir/latfiles.txt $review_dir/plots $review_dir/plots_torque > /dev/null 2>&1
 
-cd $tools_dir/sunnypilot
 while IFS= read -r line; do
+  cd $review_dir
+  if [ -s "$line-$VEHICLE-lat_accel_vs_torque.png" ]; then
+    echo "$line already present in the review directory. Skipping..."
+    echo
+    continue
+  fi
+
+  cd $tools_dir/sunnypilot
+
   ln $(echo $(find $review_rlog_dir -depth -name "*$line*--rlog.zst")) $review_rlog_route_dir
 
   sed -i 's/PREPROCESS_ONLY = False/PREPROCESS_ONLY = True/' tools/tuning/lat_settings.py > /dev/null 2>&1
@@ -113,6 +121,7 @@ while IFS= read -r line; do
     bail_on_error
   else
     echo "No valid .lat files generated from route: $line"
+    echo
   fi
 
   route_name="${line/|/_}"
