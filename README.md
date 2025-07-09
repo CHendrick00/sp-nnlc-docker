@@ -7,10 +7,9 @@
 3. Generate the model by running `nnlc-process` on the container.
 4. Follow the instructions in [Testing Models](#testing-models) to upload your generated model to your comma device for testing.
 
+## Provided NNLC Tools
 
-## Features and Usage
-
-### Automated Rlog Collection
+### Automated Rlog Collection: rlog-import
 Importing rlogs from the comma device directly from the docker container is not only supported but also encouraged in order to ensure the files are named correctly and saved in the proper format and location for processing.
 
 **Instructions**
@@ -29,7 +28,17 @@ Importing rlogs from the comma device directly from the docker container is not 
 `docker exec -t nnlc bash -c rlog-import`
 5. If the scheduled rlog importer is enabled and the container is left running, rlogs will be imported automatically every 6 hours or following the schedule provided with RLOGS_SCHEDULE.
 
-### NNLC Model Generation
+### Unformatted Rlog Renaming: rlog-rename
+In the event you have rlogs copied directly from the comma device with the original directory structure and naming scheme, you can still use these by renaming them to the required format with the rlog-rename tool.
+
+**Instructions**
+1. From the host, copy the existing logs to the data volume mount location under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
+2. Run the rlog renaming script using docker exec:</br>
+  `docker exec -t nnlc bash -c rlog-rename`
+3. See the renamed files under `/data/rlogs/$VEHICLE/$DEVICE_ID`
+4. Optional. Delete the files under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
+
+### NNLC Model Generation: nnlc-process
 The container includes all required tools and packages to process rlogs into an NNLC model.
 
 **Instructions**
@@ -40,7 +49,7 @@ The container includes all required tools and packages to process rlogs into an 
     - `plots_torque/*.png`
     - `$VEHICLE lat_accel_vs_torque.png`
 4. During the model generation step, make sure you see the expected device being used in the output: `using device: gpu`
-    - If you see `using device: cpu`, abort the training as the resulting model will not work correctly. A check is in place to prevent this in most situations, however all edge cases may not be tested.
+    - If you see `using device: cpu`, abort the training as the resulting model will not work correctly. A check is in place to prevent this in most situations, however some instances of this failing to prevent cpu training have been reported.
 5. After model generation completes, review the following outputs:
     - `VEHICLE_NAME_torque_adjusted_eps.json` - NNLC model file
     - `VEHICLE_NAME_torque_adjusted_eps/*.png`
@@ -49,43 +58,61 @@ The container includes all required tools and packages to process rlogs into an 
 **Notes:**
 - The first run of the model training step will need to precompile a small number of Julia packages based on your host system, which may cause this run to take a few extra minutes. This should generally be a one-time thing, but may be triggered again after updating GPU drivers on the host system.
 - If the `$VEHICLE lat_accel_vs_torque.png` plot data in the driver columns appears overly noisy or has an abnormally large ratio of events compared to the LKA column, it may be a good idea to try using [nnlc-review](#reviewing-individual-route-rlogs) to see if certain especially noisy logs should be excluded.
+- Mazda is reportedly incompatible with torque_adjusted_eps and may need to use the steer_cmd model file instead.
 
-### Renaming Existing Rlogs
-In the event you have rlogs copied directly from the comma device with the original directory structure and naming scheme, you can still use these by renaming them to the required format with the included script.
-
-**Instructions**
-1. From the host, copy the existing logs to the data volume mount location under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
-2. Run the rlog renaming script using docker exec:</br>
-  `docker exec -t nnlc bash -c rlog-rename`
-3. See the renamed files under `/data/rlogs/$VEHICLE/$DEVICE_ID`
-4. Optional. Delete the files under `/data/rlogs/$VEHICLE/$DEVICE_ID/data/media/0/realdata`
-
-### Reviewing Individual Route Rlogs
-When working with noisy data, it can be helpful to have a more granular way to review and filter what logs you want to include or exclude when generating a model. This feature allows for processing of rlogs per individual route, outputting the plots_torque/ directory and lat_accel_vs_torque plots of each route for manual review.
+### Individual Route Review: nnlc-review
+When working with large or noisy datasets, it can be helpful to have a more granular way to review and filter what logs you want to include or exclude when generating a model. This feature allows for processing of rlogs per individual route, outputting the plots_torque/ directory and lat_accel_vs_torque plots of each route for manual review.
 
 **Instructions**
 1. Ensure rlog.zst files are present under `/data/rlogs/$VEHICLE/$DEVICE_ID` and named according to the required format: `[DEVICE_ID]_[ROUTE]--rlog.zst`
-2. Run the rlog processing and model generation script using docker exec:</br>
+2. Run the rlog route processing review script using docker exec:</br>
   `docker exec -t nnlc bash -c nnlc-review`
-3. After all routes have finished processing, you can find the following plots for each route prefixed with the device ID and route name under `data/output/$VEHICLE/review` as below:
-    - `[DEVICE_ID]_[ROUTE_NAME]-plots_torque/*.png`
-    - `[DEVICE_ID]_[ROUTE_NAME]-lat_accel_vs_torque.png`
+3. After all routes have finished processing, you can find the following plots for each route prefixed with the device ID and route name under `/data/review/$VEHICLE` as below:
+    - `[ROUTE_NAME]-plots_torque/`
+    - `[ROUTE_NAME]-[VEHICLE]-lat_accel_vs_torque.png`
 
 **Notes:**
 - When reviewing individual route outputs, the strongest indicators of rlog quality are the number of Driver torque events (column 3) listed the lat_accel_vs_torque plot, the ratio of Driver events to LKA events (column 2), and the overall shape and distribution of the Driver events. Routes with a large ratio of driver to LKA events or a noisy pattern of driver events should be removed from the pool to reduce the amount of low quality data in the training dataset.
+  - Some vehicles have a known issue where a large driver event count is present even without any physical driver input. For these cases, ideal routes have plots with driver events primarily centered closely along the x-axis (column 3).
 
-### Post-Processing Cleanup
-When switching to another set of rlogs under `/data/rlogs` or removing previously processed rlogs from the dataset, you would normally also need to remember to manually delete the rlogs and lat files present in the processing directory. `nnlc-clean` simplifies this by allowing for quick cleanup of the output directory. Be aware that once run this cleanup is irreversible, but does not delete any files outside of the output directory so any unintentional deletions can generally be recreated by running processing again.
+### Process/Review/Rlog Archival: nnlc-backup
+A tool to create a backup of your downloaded rlogs, processing and training outputs, or route review plots has been provided to enable you to quickly switch between datasets by archiving the current directory contents. Some example cases where this may be useful include:
+- After training a model, you can run the backup tool to create a timestamped or otherwise named archive of the processing outputs, model files, and a list of the rlogs and lat files used.
+- Before running nnlc-clean, you may want to save the current directory contents.
+- Before switching to a different rlog set for processing or review, you can create an archive of the current contents of the rlog-import directory.
+
+**Instructions**
+1. Run the backup script using docker exec:</br>
+  `docker exec -it nnlc bash -c nnlc-backup`
+2. You will be presented with a list of options available for backup along with the number of relevant files found for each:
+    - `nnlc-process` processing outputs
+    - `nnlc-process` processing outputs w/ latfiles
+    - `nnlc-review` route plots
+    - `rlog-import` rlogs
+3. After choosing an option, you will be presented with a list of the files to be included in the backup and a prompt to enter a custom name or use a default timestamped name.
+    - If using a custom name and an archive with that name already exists, you can either choose to overwrite the existing file or choose another name.
+4. A .tar.gz archive will be generated under /data/backups containing the previously listed files, and you will be returned to the selection menu.
+
+**Notes:**
+- To exit at any point when an exit option is not available, use Ctrl+C.
+- For both nnlc-process options, a list of rlogs and latfiles present is generated and included in the archive in order to know what logs went into the dataset.
+- This tool does not check file timestamps, so if a backup of nnlc-process is made after a run of nnlc-process was cancelled without fully completing the training stage it is not guaranteed that the model file present in the resulting archive matches the processing outputs or rlogs/latfiles present. The best practice for nnlc-process backups is to archive only after training a model or to run nnlc-clean prior to running nnlc-process.
+
+### Post-Processing Cleanup: nnlc-clean
+When switching to another set of rlogs under `/data/rlogs` or removing previously processed rlogs from the dataset, you would normally also need to remember to manually delete the rlogs and lat files present in the processing directory. `nnlc-clean` simplifies this by allowing for quick cleanup of the output and review directories. Be aware that once run this cleanup is irreversible, but does not delete any files outside of the output or review directories so any unintentional deletions can generally be recreated by running processing or review again.
 
 **Instructions**
 1. Run the processing and review cleanup script using docker exec:</br>
   `docker exec -it nnlc bash -c nnlc-clean`
-2. For each case where matching files are identified for cleanup, you will be presented with a list of files that would be deleted followed by a (y/n) prompt for each of these options:
-    - `nnlc-process` lat files & processing and training outputs
-    - `nnlc-process` rlogs copied to the processing directory
+2. You will be presented with a list of options available for cleaning along with the number of relevant files found for each:
+    - `nnlc-process` processing outputs and lat files
+    - `nnlc-process` cached rlogs
+    - `nnlc-review` processing outputs and lat files
+    - `nnlc-review` cached rlogs
     - `nnlc-review` route plots
-    - `nnlc-review` lat files & processing outputs
-    - `nnlc-review` rlogs copied to the review processing directory
+3. After choosing an option, you will be presented with a list of the files to be deleted and a prompt to confirm before proceeding with deletion.
+    - If deletion fails due to file permissions or otherwise, a count of the remaining files is provided with a prompt to delete them manually.
+4. After the directory cleanup is complete, you will be returned to the selection menu.
 
 **Notes:**
 - There is intentionally no option to clean logs from the rlog download directory, as permanently deleting your entire `rlog-import` archive would rarely be desired and as such should be a deliberate, manual action.
@@ -195,32 +222,42 @@ After generating a model, the following steps must be performed to test on your 
 |------------------------|------------------------------------------------------------------|---------------------|----------------|-----------------------------------------------------------------------|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
 | COMMA_IP               | Local IP of the comma device                                     | 192.168.1.100       | -              | -                                                                     | If ENABLE_RLOGS_IMPORTER=true | Highly recommended to assign the comma a static IP in your router to prevent this value from changing                                      |
 | DEVICE_ID              | Comma device's dongle ID                                         | 3d264cee10fdc8d3    | -              | -                                                                     | Yes                           | Can be found in comma device settings or your Comma Connect account.                                                                       |
-| ENABLE_RLOGS_IMPORTER  | Enables importing of rlogs from comma device                     | true                | false          | true, false                                                           | No, but recommended           | Creates the SSH config to the comma device - the container can't be used to upload a model without this enabled                            |
-| ENABLE_RLOGS_SCHEDULER | Enables rlog import script to be automatically run on a schedule | true                | false          | true, false                                                           | No                            | Requires the container to be left running continuously                                                                                     |
+| ENABLE_RLOGS_IMPORTER  | Enables importing of rlogs from comma device                     | true                | false          | true, false                                                           | No, but recommended           | Creates the SSH config to the comma device - the container can't be used to upload a model to the comma device without this enabled        |
+| ENABLE_RLOGS_SCHEDULER | Enables rlog import script to be automatically run on a schedule | true                | false          | true, false                                                           | No                            | Requires the container to be left running to function properly                                                                             |
 | RLOGS_SCHEDULE         | Allows a custom schedule for ENABLE_RLOGS_SCHEDULER              | 0 0 * * *           | 0 0-23/6 * * * | See https://crontab.guru/                                             | No                            | Highly advise against setting the minute (first) value to anything other than 0 to avoid triggering concurrent runs or unexpected behavior |
 | VEHICLE                | Name of vehicle to use when naming directories                   | ioniq6              | -              | -                                                                     | Yes                           | Does not have to match vehicle name in opendbc. Do NOT include any spaces or special characters in this value                              |
 | TZ                     | Timezone used by the container                                   | America/Los_Angeles | UTC            | See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List | No, but recommended           | Useful to set with ENABLE_RLOGS_SCHEDULER in order for the scheduled runs to happen at the expected time                                   |
 
 
 ## Data Volume Filetree
-See below for a diagram of the data volume directory structure, where certain files are located, what files you should expect to see after running the processing script, and which of these files are important.
+See below for a diagram of the data volume directory structure, where certain files are located, what files you should expect to see after running the different tools, and which of these files are important.
 ```
 /
-├── data/ (VOLUME)
-│   ├── config/                                            (persistent SSH keys)
-│   │   ├── ... 
+├── data/
+│   ├── backup/
+│   │   ├── nnlc-process/
+│   │   │   ├── *.tar.gz                                   (nnlc-process output archives)
+│   │   ├── nnlc-review/
+│   │   │   ├── *.tar.gz                                   (nnlc-review route plot archives)
+│   │   ├── rlogs/
+│   │   │   ├── *.tar.gz                                   (rlog-import rlog archives)
+│   ├── config/
+│   │   ├── ...                                            (persistent SSH keys)
 │   ├── logs/                                              (script output logs)
+│   │   ├── nnlc-backup_log.txt
+│   │   ├── nnlc-clean_log.txt
 │   │   ├── nnlc-process_log.txt
+│   │   ├── nnlc-review_log.txt
 │   │   ├── rlog-import_log.txt
 │   │   ├── rlog-import_scheduled_log.txt
-│   ├── output/
+│   │   ├── rlog-rename_log.txt
+│   ├── output/                                            (nnlc-process outputs)
 │   │   ├── $VEHICLE/
 │   │   │   ├── plots_torque/                              (Fit data plots - Processing Step 1)
 │   │   │   ├── plots_torque-/                             (Fit data plots from previous run)
-│   │   │   ├── review/                                    (Contains processing outputs of nnlc-review)
 │   │   │   ├── rlogs/
 │   │   │   │   ├── $DEVICE_ID/
-│   │   │   │   │   ├── *.zst                              (Rlogs copied from /data/rlogs for processing)
+│   │   │   │   │   ├── *.zst                              (Rlogs hardlinked from /data/rlogs for processing)
 │   │   │   ├── VEHICLE_NAME_steer_cmd/                    (Model generation output)
 │   │   │   │   ├── ... 
 │   │   │   ├── VEHICLE_NAME_torque_adjusted_eps/          (Model generation output - plots and model file)
@@ -231,6 +268,15 @@ See below for a diagram of the data volume directory structure, where certain fi
 │   │   │   ├── *.feather                                  (Feather files - Processing Step 2)
 │   │   │   ├── *.lat                                      (Lat files - Processing Step 1)
 │   │   │   ├── $VEHICLE lat_accel_vs_torque.png           (Main processing data plots - Processing Step 2)
+│   ├── review/                                            (nnlc-review outputs)
+│   │   ├── $VEHICLE/
+│   │   │   ├── plots_torque/                              (Fit data plots - Processing Step 1)
+│   │   │   ├── rlogs/
+│   │   │   │   ├── *.zst                                  (Route-specific rlogs hardlinked for processing)
+│   │   │   ├── rlogs_route/
+│   │   │   │   ├── $DEVICE_ID/
+│   │   │   │   │   ├── *.zst                              (Rlogs hardlinked from /data/rlogs for processing)
+│   │   │   ├── [ROUTE]-$VEHICLE-lat_accel_vs_torque.png   (Route-specific lat_accel_vs_torque plots)
 │   ├── rlogs/
 │   │   ├── $VEHICLE/
 │   │   │   ├── $DEVICE_ID/
@@ -241,6 +287,8 @@ See below for a diagram of the data volume directory structure, where certain fi
 ## Misc
 ### Logging
 The following logs are stored under `/data/logs` for basic debugging purposes. These are overwritten each time the associated script is run to prevent unintentional accumulation, and as such only include the log for the latest run.
+- nnlc-backup_log.txt
+  - Generated by `nnlc-backup`
 - nnlc-clean_log.txt
   - Generated by `nnlc-clean`
 - nnlc-process_log.txt
@@ -250,15 +298,21 @@ The following logs are stored under `/data/logs` for basic debugging purposes. T
 - rlog-import_log.txt
   - Generated by `rlog-import`
 - rlog-import_scheduled_log.txt
-  - Generated by scheduled rlog import job
+  - Generated by scheduled rlog import job, if enabled
 - rlog-rename_log.txt
   - Generated by `rlog-rename`
 
-### Notable Untested Functionality
+### Untested Functionality
 The following may or may not work out-of-box. These items have not been tested and as such may not exactly match the documentation or could require additional work.
-- Apple Metal
-- Untested hosts: MacOS, Linux distros besides Ubuntu
+- System hosts: MacOS, Linux distros besides Debian-based
+- CUDA-enabled GPUs older than 16xx series
+- Multi-GPU systems
+  - Most likely only 1 GPU will be used when multiple are present, in which case update the docker-compose to pass only the desired GPU to the container
 
+### Unsupported
+- All GPUs except CUDA
+- Angle-steering vehicles
+- ARM systems
 
 ## Credits
 <table id='credit'>
