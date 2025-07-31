@@ -65,8 +65,8 @@ review_rlog_dir=$review_dir/rlogs/$DEVICE_ID
 review_rlog_route_dir=$review_dir/rlogs_route
 
 pattern_process_outputs="( -iname *.lat -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
-pattern_review_outputs="( -iname *.lat -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* ) -not -path *-plots_torque/* -not -path *-lat_accel_vs_torque.png"
-pattern_review_plots="( -wholename *plots*/* -o -name *--*.png )"
+pattern_review_outputs="( -iname *.lat -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots*/* ) -not -path $VEHICLE-plots_torque/* -not -path $VEHICLE-torque_vs_lat_accel/*"
+pattern_review_plots="( -wholename $VEHICLE-plots_torque/* -o -wholename $VEHICLE-torque_vs_lat_accel/* )"
 pattern_rlogs="( -iname *.zst )"
 
 

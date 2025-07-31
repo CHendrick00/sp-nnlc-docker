@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
-
 # bail on nonzero RC function
 bail_on_error() {
   RC=$?
@@ -40,6 +38,12 @@ if [[ ! -d $review_rlog_dir ]]; then
 fi
 if [[ ! -d $review_rlog_route_dir ]]; then
   mkdir -p $review_rlog_route_dir
+fi
+if [[ ! -d "$review_rlog_dir/$VEHICLE-plots_torque" ]]; then
+  mkdir -p "$review_rlog_dir/$VEHICLE-plots_torque"
+fi
+if [[ ! -d "$review_rlog_dir/$VEHICLE-lat_accel_vs_torque" ]]; then
+  mkdir -p "$review_rlog_dir/$VEHICLE-lat_accel_vs_torque"
 fi
 
 echo
@@ -88,8 +92,9 @@ rm -r $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_d
 
 while IFS= read -r line; do
   cd $review_dir
-  if [ -s "$line-$VEHICLE-lat_accel_vs_torque.png" ]; then
-    echo "$line already present in the review directory. Skipping..."
+  route_name="${line/|/_}"
+  if [ -s "$VEHICLE-lat_accel_vs_torque/$route_name-$VEHICLE-lat_accel_vs_torque.png" ]; then
+    echo "$line already processed and outputs are present. Skipping..."
     echo
     continue
   fi
@@ -119,15 +124,14 @@ while IFS= read -r line; do
 
     tools/tuning/lat_to_csv_torquennd.py
     bail_on_error
+
+    mv "$review_dir/$VEHICLE lat_accel_vs_torque.png" "$review_dir/$VEHICLE-lat_accel_vs_torque/$route_name-$VEHICLE-lat_accel_vs_torque.png" > /dev/null 2>&1
+    mv "$review_dir/$VEHICLE-plots_torque" "$review_dir/$VEHICLE-plots_torque/$route_name-$VEHICLE-plots_torque" > /dev/null 2>&1
   else
     echo "No valid .lat files generated from route: $line"
+    grep -Fxq $line $review_dir/invalid_routes.txt || echo $line >> $review_dir/invalid_routes.txt
     echo
   fi
-
-  route_name="${line/|/_}"
-  mv "$review_dir/$VEHICLE lat_accel_vs_torque.png" "$review_dir/$route_name-$VEHICLE-lat_accel_vs_torque.png" > /dev/null 2>&1
-  rm $review_dir/$route_name-plots_torque > /dev/null 2>&1
-  mv $review_dir/plots_torque $review_dir/$route_name-plots_torque > /dev/null 2>&1
   rm $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_dir/*.feather $review_dir/latfiles.txt > /dev/null 2>&1
 
 done < "$review_dir/routes.txt"

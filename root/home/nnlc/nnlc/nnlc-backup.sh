@@ -82,7 +82,7 @@ rlog_dir=/data/rlogs/$VEHICLE
 
 pattern_process_outputs="( -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots_torque/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
 pattern_process_all="( -iname *.lat -o -name *.csv -o -name *.feather -o -name *.txt -o -name *.png -o -wholename plots_torque/* -o -wholename *steer_cmd/* -o -wholename *torque_adjusted_eps/* )"
-pattern_review_plots="( -wholename *plots*/* -o -name *--*.png )"
+pattern_review_plots="( -wholename $VEHICLE-plots_torque/* -o -wholename $VEHICLE-torque_vs_lat_accel/* )" #TODO: update paths
 pattern_latfiles="( -iname *.lat )"
 pattern_rlogs="( -iname *.zst )"
 
