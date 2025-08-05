@@ -39,10 +39,10 @@ fi
 if [[ ! -d $review_rlog_route_dir ]]; then
   mkdir -p $review_rlog_route_dir
 fi
-if [[ ! -d "$review_rlog_dir/$VEHICLE-plots_torque" ]]; then
+if [[ ! -d "$review_dir/$VEHICLE-plots_torque" ]]; then
   mkdir -p "$review_rlog_dir/$VEHICLE-plots_torque"
 fi
-if [[ ! -d "$review_rlog_dir/$VEHICLE-lat_accel_vs_torque" ]]; then
+if [[ ! -d "$review_dir/$VEHICLE-lat_accel_vs_torque" ]]; then
   mkdir -p "$review_rlog_dir/$VEHICLE-lat_accel_vs_torque"
 fi
 
