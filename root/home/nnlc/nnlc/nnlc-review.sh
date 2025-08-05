@@ -126,13 +126,13 @@ while IFS= read -r line; do
     bail_on_error
 
     mv "$review_dir/$VEHICLE lat_accel_vs_torque.png" "$review_dir/$VEHICLE-lat_accel_vs_torque/$route_name-$VEHICLE-lat_accel_vs_torque.png" > /dev/null 2>&1
-    mv "$review_dir/$VEHICLE-plots_torque" "$review_dir/$VEHICLE-plots_torque/$route_name-$VEHICLE-plots_torque" > /dev/null 2>&1
+    mv "$review_dir/plots" "$review_dir/$VEHICLE-plots_torque/$route_name-$VEHICLE-plots_torque" > /dev/null 2>&1
   else
     echo "No valid .lat files generated from route: $line"
     grep -Fxq $line $review_dir/invalid_routes.txt || echo $line >> $review_dir/invalid_routes.txt
     echo
   fi
-  rm $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_dir/*.feather $review_dir/latfiles.txt > /dev/null 2>&1
+  rm -r $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_dir/*.feather $review_dir/*.png $review_dir/latfiles.txt $review_dir/plots_torque $review_dir/plots > /dev/null 2>&1
 
 done < "$review_dir/routes.txt"
 
