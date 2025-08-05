@@ -15,6 +15,7 @@ mkdir -p /home/nnlc/miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /home/nnlc/miniconda3/miniconda.sh
 bash /home/nnlc/miniconda3/miniconda.sh -b -u -p /home/nnlc/miniconda3
 rm -f /home/nnlc/miniconda3/miniconda.sh
+conda tos accept
 echo ". /home/nnlc/miniconda3/bin/activate" >> /home/nnlc/.bashrc
 echo ". /home/nnlc/miniconda3/bin/activate" >> /home/nnlc/.bash_functions
 . /home/nnlc/.bash_functions
