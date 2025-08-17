@@ -93,6 +93,12 @@ rm -r $review_rlog_route_dir/*.zst $review_dir/*.lat $review_dir/*.csv $review_d
 while IFS= read -r line; do
   cd $review_dir
   route_name="${line/|/_}"
+
+  if [ -f "$review_dir/invalid_routes.txt" ] && grep -Fxq "$line" "$review_dir/invalid_routes.txt"; then
+    echo "$line found in invalid_routes.txt. Skipping..."
+    echo
+    continue
+  fi
   if [ -s "$VEHICLE-lat_accel_vs_torque/$route_name-$VEHICLE-lat_accel_vs_torque.png" ]; then
     echo "$line already processed and outputs are present. Skipping..."
     echo
